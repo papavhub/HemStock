@@ -18,6 +18,7 @@ import re
 import time
 import zipfile
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -267,14 +268,13 @@ def fetch_all() -> list[dict]:
         print(f"  [WARN] corpCode.xml 실패: {e} → 하드코딩 사용")
         corp_map = dict(DART_CORPS)
 
-    stocks = []
-    print(f"\n  국민연금 D001 공시 조회 + 뷰어 파싱 ({len(corp_map)}종목)...")
+    print(f"\n  국민연금 D001 공시 조회 + 뷰어 파싱 ({len(corp_map)}종목, 병렬 처리)...")
 
-    for corp_name, corp_code in corp_map.items():
+    def fetch_one(corp_name: str, corp_code: str):
         try:
             filings = get_nps_filings(corp_code)
             if not filings:
-                continue
+                return None
 
             latest   = filings[0]
             rcept_no = latest.get("rcept_no", "")
@@ -283,7 +283,7 @@ def fetch_all() -> list[dict]:
             ratio = parse_ratio_from_viewer(rcept_no, corp_name) if rcept_no else None
             if ratio is None:
                 print(f"  - {corp_name:<22} 공시 있으나 비율 파싱 실패 ({rcept_no})")
-                continue
+                return None
 
             prev_ratio = ratio
             if len(filings) >= 2:
@@ -294,18 +294,28 @@ def fetch_all() -> list[dict]:
             if len(rcept_dt) == 8:
                 rcept_dt = f"{rcept_dt[:4]}-{rcept_dt[4:6]}-{rcept_dt[6:]}"
 
-            stocks.append({
+            print(f"  ✓ {corp_name:<22} {ratio:.2f}%  변동 {change:+.2f}%  ({rcept_dt})")
+            return {
                 "name":     corp_name,
                 "value":    round(ratio, 2),
                 "change":   change,
                 "amount":   f"지분율 {ratio:.2f}%",
                 "rcept_dt": rcept_dt,
-            })
-            print(f"  ✓ {corp_name:<22} {ratio:.2f}%  변동 {change:+.2f}%  ({rcept_dt})")
-
+            }
         except Exception as e:
             print(f"  [ERROR] {corp_name}: {e}")
-        time.sleep(0.3)
+            return None
+
+    stocks = []
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(fetch_one, name, code): name
+            for name, code in corp_map.items()
+        }
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                stocks.append(result)
 
     stocks.sort(key=lambda x: x["value"], reverse=True)
     for i, s in enumerate(stocks, 1):
