@@ -53,22 +53,7 @@ const HELP = {
     '비트코인은 위험자산 선호도의 선행 지표입니다. 24시간 -5% 이하 급락은 주식시장 조정의 전조로 해석합니다. 출처: CoinGecko API (무료, 키 불필요)',
 }
 
-// ═══════════════════════════════════════════════════
-// Mock 데이터 (신용잔고·신고가 — 공개 무료 API 없음)
-// ═══════════════════════════════════════════════════
-const CREDIT_DATA = [
-  { date: '01월', ratio: 1.82 }, { date: '02월', ratio: 1.95 },
-  { date: '03월', ratio: 2.11 }, { date: '04월', ratio: 2.34 },
-  { date: '05월', ratio: 2.58 }, { date: '06월', ratio: 2.71 },
-]
-const BREADTH_DATA = [
-  { date: '06/20', highs: 312, lows: 89 },
-  { date: '06/21', highs: 287, lows: 102 },
-  { date: '06/24', highs: 334, lows: 78 },
-  { date: '06/25', highs: 298, lows: 95 },
-  { date: '06/26', highs: 321, lows: 83 },
-  { date: '06/27', highs: 356, lows: 71 },
-]
+// (Mock 데이터 제거 — 전부 JSON 파일에서 읽어옴)
 
 // 기본 체크리스트
 const DEFAULT_CHECKLIST = [
@@ -182,6 +167,44 @@ function useMarketData() {
     try {
       const base = import.meta.env.BASE_URL || '/'
       const res  = await fetch(`${base}data/market.json?t=${Date.now()}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setData(await res.json())
+    } catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { fetch_() }, [fetch_])
+  return { data, loading, error, refetch: fetch_ }
+}
+
+/** public/data/credit.json — 신용잔고 */
+function useCreditData() {
+  const [data, setData]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const fetch_ = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const base = import.meta.env.BASE_URL || '/'
+      const res  = await fetch(`${base}data/credit.json?t=${Date.now()}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setData(await res.json())
+    } catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { fetch_() }, [fetch_])
+  return { data, loading, error, refetch: fetch_ }
+}
+
+/** public/data/breadth.json — 신고가·신저가 */
+function useBreadthData() {
+  const [data, setData]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const fetch_ = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const base = import.meta.env.BASE_URL || '/'
+      const res  = await fetch(`${base}data/breadth.json?t=${Date.now()}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setData(await res.json())
     } catch (e) { setError(e.message) }
@@ -860,125 +883,184 @@ function FedWidget() {
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ⑦: 신용잔고 비율 (Mock — 공개 API 없음)
+// 위젯 ⑦: 신용잔고 비율 (GitHub Actions — KRX/KOFIA)
 // ═══════════════════════════════════════════════════
 function CreditWidget() {
   const C = useC()
-  const latest = CREDIT_DATA[CREDIT_DATA.length - 1].ratio
-  const prev   = CREDIT_DATA[CREDIT_DATA.length - 2].ratio
-  const up     = latest > prev
+  const { data, loading, error, refetch } = useCreditData()
+
+  const latest = data?.latest ?? null
+  const prev   = data?.prev   ?? null
+  const peak   = data?.peak   ?? null
+  const change = data?.change ?? 0
+  const series = data?.series ?? []
+  const up     = change > 0
+
+  // 전고점 대비 위치
+  const toPeak = peak && latest ? ((latest / peak) * 100).toFixed(0) : null
 
   return (
-    <Widget title="신용잔고 비율" badge="Mock · KOFIA 미제공" badgeColor={C.muted}
-      helpKey="credit" source="금융투자협회(KOFIA) — API 미공개"
-      sourceUrl="https://www.kofia.or.kr/brd/m_17/view.do?seq=104" className="col-span-2">
+    <Widget title="신용잔고 비율" badge={up ? '▲ 상승' : '▼ 하락'} badgeColor={up ? C.orange : C.green}
+      helpKey="credit" source={data?.source?.includes('fallback') ? 'KRX/KOFIA · fallback' : 'KRX 정보데이터시스템'}
+      sourceUrl="https://data.krx.co.kr" className="col-span-2">
       <InfoBox>
         증권사에서 빌린 돈으로 주식을 산 금액의 시장 비율.
-        높을수록 개인 레버리지 과열. 전고점 대비 위치를 항상 확인하세요.
-        <span style={{ color: C.orange }}> KOFIA는 공개 API를 제공하지 않아 현재 Mock 데이터입니다.</span>
+        <span style={{ color: C.red }}> 전고점 돌파 시 과열 신호</span>,
+        급감 시 반대매매 바닥 신호. 매일 새벽 GitHub Actions가 KRX에서 자동 갱신합니다.
+        {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
       </InfoBox>
-      <div className="mb-3">
-        <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>코스피 신용잔고 비율</p>
-        <div className="flex items-end gap-2">
-          <p className="text-2xl font-semibold" style={{ color: up ? C.orange : C.green }}>{latest.toFixed(2)}%</p>
-          <p className="text-xs mb-1" style={{ color: up ? C.red : C.green }}>
-            {up ? '▲' : '▼'} {Math.abs(latest - prev).toFixed(2)}%
-          </p>
-        </div>
-        <p className="text-[10px] mt-1" style={{ color: C.muted }}>* 전고점 2.85% 대비 현재 위치 모니터링</p>
-      </div>
-      <div className="h-28">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={CREDIT_DATA} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-            <defs>
-              <linearGradient id="creditGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={C.orange} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-            <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={[1.5, 3]} />
-            <Tooltip content={<ChartTooltip unit="%" />} />
-            <ReferenceLine y={2.85} stroke={C.red} strokeDasharray="4 4"
-              label={{ value: '전고점', fill: C.red, fontSize: 9 }} />
-            <Area type="monotone" dataKey="ratio" name="신용잔고" stroke={C.orange}
-              fill="url(#creditGrad)" strokeWidth={1.5} dot={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+
+      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
+        <>
+          <div className="flex items-start gap-4 mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>신용잔고 비율</p>
+              <div className="flex items-end gap-2">
+                <p className="text-2xl font-semibold" style={{ color: up ? C.orange : C.green }}>
+                  {latest?.toFixed(2) ?? '—'}%
+                </p>
+                <p className="text-xs mb-1" style={{ color: up ? C.red : C.green }}>
+                  {up ? '▲' : '▼'} {Math.abs(change).toFixed(2)}%
+                </p>
+              </div>
+            </div>
+            {peak && (
+              <div className="ml-auto text-right">
+                <p className="text-[10px]" style={{ color: C.muted }}>전고점</p>
+                <p className="text-lg font-semibold" style={{ color: C.red }}>{peak.toFixed(2)}%</p>
+                <p className="text-[10px]" style={{ color: toPeak >= 90 ? C.red : C.muted }}>
+                  현재 {toPeak}% 수준
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 전고점 대비 게이지 */}
+          {peak && latest && (
+            <div className="mb-3">
+              <div className="flex justify-between text-[9px] mb-0.5" style={{ color: C.muted }}>
+                <span>0%</span>
+                <span style={{ color: C.red }}>전고점 {peak.toFixed(2)}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: C.border }}>
+                <div className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((latest / peak) * 100, 100)}%`,
+                    background: toPeak >= 90 ? C.red : toPeak >= 70 ? C.orange : C.green,
+                  }} />
+              </div>
+            </div>
+          )}
+
+          <div className="h-24">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={series} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="creditGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={C.orange} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                <Tooltip content={<ChartTooltip unit="%" />} />
+                {peak && <ReferenceLine y={peak} stroke={C.red} strokeDasharray="4 4"
+                  label={{ value: '전고점', fill: C.red, fontSize: 9 }} />}
+                <Area type="monotone" dataKey="ratio" name="신용잔고" stroke={C.orange}
+                  fill="url(#creditGrad)" strokeWidth={1.5} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </Widget>
   )
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ⑧: 시장 건강 상태 (Mock — KRX 신고가 데이터)
+// 위젯 ⑧: 시장 건강 상태 (GitHub Actions — yfinance KOSPI 80종목)
 // ═══════════════════════════════════════════════════
 function BreadthWidget() {
   const C = useC()
-  const latest  = BREADTH_DATA[BREADTH_DATA.length - 1]
-  const prev    = BREADTH_DATA[BREADTH_DATA.length - 2]
-  const ratio   = (latest.highs / (latest.highs + latest.lows) * 100).toFixed(1)
-  const healthy = parseFloat(ratio) > 60
+  const { data, loading, error, refetch } = useBreadthData()
+
+  const latest  = data?.latest  ?? null
+  const series  = data?.series  ?? []
+  const ratio   = latest?.ratio ?? null
+  const healthy = ratio !== null && ratio > 60
+
+  const prev = series.length >= 2 ? series[series.length - 2] : null
+  const highChange = latest && prev ? latest.highs - prev.highs : null
 
   return (
-    <Widget title="시장 건강 상태 (신고가 비율)" badge="Mock · KRX 비공개" badgeColor={C.muted}
-      helpKey="breadth" source="KRX 정보데이터시스템 — 인증 필요"
-      sourceUrl="https://data.krx.co.kr" className="col-span-2">
+    <Widget title="시장 건강 상태 (신고가 비율)" badge={healthy ? '건강' : '약화'} badgeColor={healthy ? C.green : C.orange}
+      helpKey="breadth" source="Yahoo Finance · KOSPI 주요주 80종목"
+      sourceUrl="https://finance.yahoo.com" className="col-span-2">
       <InfoBox>
-        52주 신고가 종목 수 vs 신저가 종목 수의 비율.
-        지수가 오르는데 신고가 종목이 줄면 소수 대형주의 '착시 현상'.
-        <span style={{ color: C.orange }}> KRX 신고가·신저가 데이터는 인증이 필요해 현재 Mock 데이터입니다.</span>
+        KOSPI 주요 80개 종목 중 52주 신고가 경신 종목 수 비율.
+        <span style={{ color: C.red }}> 지수↑ + 신고가↓ = 소수 대형주 착시</span> (하락 전조).
+        매일 새벽 GitHub Actions (yfinance)가 자동 갱신합니다.
+        {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
       </InfoBox>
-      <div className="flex gap-6">
-        <div className="w-40 shrink-0 space-y-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>신고가 비율</p>
-            <p className="text-2xl font-semibold" style={{ color: healthy ? C.green : C.orange }}>{ratio}%</p>
+
+      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
+        <div className="flex gap-6">
+          <div className="w-40 shrink-0 space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>신고가 비율</p>
+              <p className="text-2xl font-semibold" style={{ color: healthy ? C.green : C.orange }}>
+                {ratio?.toFixed(1) ?? '—'}%
+              </p>
+              <p className="text-[10px] mt-0.5" style={{ color: C.muted }}>
+                대상 {latest?.total ?? 0}종목 기준
+              </p>
+            </div>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span style={{ color: C.green }}>신고가 근접</span>
+                <span className="font-semibold" style={{ color: C.green }}>{latest?.highs ?? '—'}개</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: C.red }}>신저가 근접</span>
+                <span className="font-semibold" style={{ color: C.red }}>{latest?.lows ?? '—'}개</span>
+              </div>
+              {highChange !== null && (
+                <div className="flex justify-between border-t pt-1.5" style={{ borderColor: C.border }}>
+                  <span style={{ color: C.muted }}>전일比 신고가</span>
+                  <span style={{ color: highChange >= 0 ? C.green : C.red }}>
+                    {highChange >= 0 ? '+' : ''}{highChange}개
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* 원형 게이지 */}
+            <svg width="70" height="70" viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="28" fill="none" stroke={C.border} strokeWidth="6" />
+              <circle cx="35" cy="35" r="28" fill="none"
+                stroke={healthy ? C.green : C.orange} strokeWidth="6"
+                strokeDasharray={`${(ratio ?? 0) * 1.759} 175.9`}
+                strokeLinecap="round" transform="rotate(-90 35 35)" />
+              <text x="35" y="39" textAnchor="middle" fontSize="12"
+                fill={healthy ? C.green : C.orange} fontFamily="monospace">
+                {ratio?.toFixed(0) ?? '—'}%
+              </text>
+            </svg>
           </div>
-          <div className="space-y-1.5 text-xs">
-            <div className="flex justify-between">
-              <span style={{ color: C.green }}>신고가</span>
-              <span className="font-semibold" style={{ color: C.green }}>{latest.highs}개</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: C.red }}>신저가</span>
-              <span className="font-semibold" style={{ color: C.red }}>{latest.lows}개</span>
-            </div>
-            <div className="flex justify-between border-t pt-1.5" style={{ borderColor: C.border }}>
-              <span style={{ color: C.muted }}>전일 신고가</span>
-              <span style={{ color: C.muted }}>{prev.highs}개</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: C.muted }}>증감</span>
-              <span style={{ color: latest.highs > prev.highs ? C.green : C.red }}>
-                {latest.highs > prev.highs ? '+' : ''}{latest.highs - prev.highs}개
-              </span>
-            </div>
+          <div className="flex-1 h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={series.slice(-10)} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                <Tooltip content={<ChartTooltip unit="개" />} />
+                <Bar dataKey="highs" name="신고가" fill={C.green} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="lows"  name="신저가" fill={C.red}   radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <svg width="70" height="70" viewBox="0 0 70 70">
-            <circle cx="35" cy="35" r="28" fill="none" stroke={C.border} strokeWidth="6" />
-            <circle cx="35" cy="35" r="28" fill="none"
-              stroke={healthy ? C.green : C.orange} strokeWidth="6"
-              strokeDasharray={`${parseFloat(ratio) * 1.759} 175.9`}
-              strokeLinecap="round" transform="rotate(-90 35 35)" />
-            <text x="35" y="39" textAnchor="middle" fontSize="12"
-              fill={healthy ? C.green : C.orange} fontFamily="monospace">{ratio}%</text>
-          </svg>
         </div>
-        <div className="flex-1 h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={BREADTH_DATA} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-              <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-              <Tooltip content={<ChartTooltip unit="개" />} />
-              <Bar dataKey="highs" name="신고가" fill={C.green} radius={[2, 2, 0, 0]} />
-              <Bar dataKey="lows"  name="신저가" fill={C.red}   radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      )}
     </Widget>
   )
 }
@@ -1230,10 +1312,9 @@ export default function Dashboard() {
               <div className="col-span-4 flex items-center justify-between px-1 py-2 text-[10px]"
                 style={{ color: C.muted }}>
                 <span>
-                  HemStock v0.3 ·
-                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕지수·USD/KRW·BTC (키 불필요) ·
-                  <span style={{ color: C.accent }}> ⟳ 매일 04:00 KST</span>: VIX·금리·DXY·국민연금 (yfinance) ·
-                  <span style={{ color: C.muted }}> Mock</span>: 신용잔고·신고가비율
+                  HemStock v0.4 ·
+                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕지수·USD/KRW·BTC ·
+                  <span style={{ color: C.accent }}> ⟳ 매일 04:00 KST</span>: VIX·금리·DXY·국민연금·신용잔고·신고가
                 </span>
                 <span>투자 참고용이며 투자 권유가 아닙니다.</span>
               </div>

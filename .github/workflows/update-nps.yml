@@ -17,9 +17,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ─────────────────────────────────────────
-  # Job 1: 데이터 수집 (schedule / workflow_dispatch)
-  # ─────────────────────────────────────────
+  # ─────────────────────────────────────────────────
+  # Job 1: 데이터 수집
+  # ─────────────────────────────────────────────────
   fetch-data:
     name: 📥 시장 데이터 수집
     runs-on: ubuntu-latest
@@ -43,35 +43,48 @@ jobs:
       - name: 의존성 설치
         run: pip install -r scripts/requirements.txt
 
-      - name: 국민연금 포트폴리오 수집
+      # ① 국민연금 포트폴리오 (DART OpenAPI)
+      - name: NPS 수집 (DART OpenAPI)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/fetch_nps.py
 
-      - name: 시장 핵심 지표 수집 (VIX / 금리 / DXY / S&P500)
+      # ② VIX · 미 국채금리 · 달러인덱스 · S&P500 (yfinance)
+      - name: 시장 핵심지표 수집 (VIX·금리·DXY)
         run: python scripts/fetch_market_data.py
+
+      # ③ 신용거래 잔고 비율 (KRX / KOFIA)
+      - name: 신용잔고 비율 수집
+        run: python scripts/fetch_credit.py
+
+      # ④ 신고가·신저가 비율 (yfinance KOSPI 80종목)
+      - name: 신고가 비율 수집 (KOSPI 주요주)
+        run: python scripts/fetch_breadth.py
 
       - name: 변경 여부 확인
         id: check
         run: |
           if git diff --quiet public/data/; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "데이터 변경 없음"
+            echo "변경 없음"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "변경 감지:"
             git diff --name-only public/data/
           fi
 
-      - name: 변경 사항 커밋 & 푸시
+      - name: 커밋 & 푸시
         if: steps.check.outputs.changed == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/
-          git commit -m "💡 자동 업데이트: 시장 데이터 (NPS + VIX/금리/DXY)"
+          git commit -m "💡 자동 업데이트: NPS·VIX·금리·DXY·신용잔고·신고가비율"
           git push
 
-  # ─────────────────────────────────────────
-  # Job 2: React 빌드 & GitHub Pages 배포
-  # ─────────────────────────────────────────
+  # ─────────────────────────────────────────────────
+  # Job 2: 빌드 & GitHub Pages 배포
+  # ─────────────────────────────────────────────────
   deploy:
     name: 🚀 빌드 & Pages 배포
     runs-on: ubuntu-latest
@@ -82,36 +95,30 @@ jobs:
         needs.fetch-data.result == 'success' ||
         needs.fetch-data.result == 'skipped'
       )
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: 저장소 체크아웃 (최신 커밋)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
 
-      - name: Node.js 20 설정
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
 
-      - name: 의존성 설치
-        run: npm ci
+      - run: npm ci
 
       - name: Vite 빌드
         run: npm run build
         env:
           NODE_ENV: production
 
-      - name: GitHub Pages 업로드
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
-      - name: GitHub Pages 배포
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
