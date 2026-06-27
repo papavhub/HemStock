@@ -124,25 +124,48 @@ def get_nps_filings(corp_code: str) -> list[dict]:
 
 # ── Step 3: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
 def extract_ratio(text: str):
-    """HTML/XML 텍스트에서 보유비율(5~25%) 추출"""
-    # 패턴 1: XML 태그
+    """HTML 테이블에서 보유비율 추출 — BeautifulSoup 우선, 날짜 오탐 방지"""
+    soup = BeautifulSoup(text, "html.parser")
+
+    # ① 테이블 셀에서 "보유비율" 또는 "지분율" 텍스트를 찾고 인접 셀 값 파싱
+    keywords = ("보유비율", "보유 비율", "지분율", "보유주식비율")
+    for cell in soup.find_all(["td", "th"]):
+        cell_txt = cell.get_text(strip=True).replace(" ", "")
+        if any(kw.replace(" ", "") in cell_txt for kw in keywords):
+            # 다음 td 또는 다음다음 td에서 숫자 추출
+            for sibling in [cell.find_next_sibling("td"),
+                            cell.find_next("td")]:
+                if sibling is None:
+                    continue
+                raw = sibling.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "").strip()
+                try:
+                    v = float(raw)
+                    if 5.0 <= v <= 25.0:
+                        return v
+                except ValueError:
+                    # 숫자만 추출
+                    m = re.search(r"([0-9]+\.[0-9]{1,4})", raw)
+                    if m:
+                        v = float(m.group(1))
+                        if 5.0 <= v <= 25.0:
+                            return v
+
+    # ② XML 태그 형태 (XBRL)
     for tag in ("holdRto", "bndtRto", "posesnStockRto"):
         m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
         if m:
             v = float(m.group(1))
             if 5.0 <= v <= 25.0:
                 return v
-    # 패턴 2: 보유비율 텍스트 근처
-    for pat in [
-        r"보유\s*비율[^0-9<]{0,40}([0-9]+\.[0-9]{1,4})",
-        r"지분율[^0-9<]{0,20}([0-9]+\.[0-9]{1,4})",
-        r"([0-9]+\.[0-9]{2})\s*(?:%|％|</)",
-    ]:
-        for m in re.finditer(pat, text):
-            v = float(m.group(1))
-            if 5.0 <= v <= 25.0:
-                return v
-    return None
+
+    # ③ "보유비율" 뒤에 바로 % 붙은 패턴 — 날짜 오탐 방지 위해 % 필수
+    m = re.search(r"보유\s*비율[^0-9<]{0,60}([0-9]+\.[0-9]{1,4})\s*(?:%|％)", text)
+    if m:
+        v = float(m.group(1))
+        if 5.0 <= v <= 25.0:
+            return v
+
+    return None  # 날짜 오탐 방지: catch-all 패턴 제거
 
 
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
