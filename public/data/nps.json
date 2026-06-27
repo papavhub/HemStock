@@ -1,76 +1,86 @@
 {
-  "updated_at": "2026-06-27 20:35 KST [fallback]",
-  "source": "fallback (국민연금 5%↑ 보유 공시 기준)",
+  "updated_at": "2026-06-27 21:17 KST [fallback]",
+  "source": "fallback — 분기 공시 기준 하드코딩 (DART_API_KEY 설정 필요)",
   "stocks": [
     {
       "rank": 1,
       "name": "삼성전자",
       "value": 8.26,
       "change": 0.1,
-      "amount": "지분율 8.26% (5%↑ 공시)"
+      "amount": "지분율 8.26%",
+      "rcept_dt": "2025-03-10"
     },
     {
       "rank": 2,
       "name": "SK하이닉스",
       "value": 6.94,
       "change": 0.3,
-      "amount": "지분율 6.94% (5%↑ 공시)"
+      "amount": "지분율 6.94%",
+      "rcept_dt": "2025-02-20"
     },
     {
       "rank": 3,
-      "name": "LG에너지솔루션",
-      "value": 6.12,
-      "change": -0.1,
-      "amount": "지분율 6.12% (5%↑ 공시)"
-    },
-    {
-      "rank": 4,
-      "name": "삼성바이오로직스",
-      "value": 5.8,
-      "change": 0.05,
-      "amount": "지분율 5.80% (5%↑ 공시)"
-    },
-    {
-      "rank": 5,
       "name": "현대차",
       "value": 8.41,
       "change": 0.0,
-      "amount": "지분율 8.41% (5%↑ 공시)"
+      "amount": "지분율 8.41%",
+      "rcept_dt": "2025-03-05"
     },
     {
-      "rank": 6,
+      "rank": 4,
       "name": "기아",
       "value": 9.12,
       "change": -0.2,
-      "amount": "지분율 9.12% (5%↑ 공시)"
+      "amount": "지분율 9.12%",
+      "rcept_dt": "2025-03-01"
     },
     {
-      "rank": 7,
+      "rank": 5,
       "name": "POSCO홀딩스",
       "value": 9.67,
       "change": 0.15,
-      "amount": "지분율 9.67% (5%↑ 공시)"
+      "amount": "지분율 9.67%",
+      "rcept_dt": "2025-02-15"
     },
     {
-      "rank": 8,
+      "rank": 6,
       "name": "KB금융",
       "value": 9.23,
       "change": 0.1,
-      "amount": "지분율 9.23% (5%↑ 공시)"
+      "amount": "지분율 9.23%",
+      "rcept_dt": "2025-02-28"
     },
     {
-      "rank": 9,
+      "rank": 7,
       "name": "신한지주",
       "value": 8.44,
       "change": 0.0,
-      "amount": "지분율 8.44% (5%↑ 공시)"
+      "amount": "지분율 8.44%",
+      "rcept_dt": "2025-03-08"
     },
     {
-      "rank": 10,
+      "rank": 8,
       "name": "하나금융지주",
       "value": 8.91,
       "change": 0.05,
-      "amount": "지분율 8.91% (5%↑ 공시)"
+      "amount": "지분율 8.91%",
+      "rcept_dt": "2025-02-22"
+    },
+    {
+      "rank": 9,
+      "name": "LG에너지솔루션",
+      "value": 6.12,
+      "change": -0.1,
+      "amount": "지분율 6.12%",
+      "rcept_dt": "2025-01-30"
+    },
+    {
+      "rank": 10,
+      "name": "삼성바이오로직스",
+      "value": 5.8,
+      "change": 0.05,
+      "amount": "지분율 5.80%",
+      "rcept_dt": "2025-02-10"
     }
   ]
 }
