@@ -729,7 +729,7 @@ function NpsWidget() {
 
   return (
     <Widget title="국민연금 포트폴리오" badge="NPS · GitHub Actions" badgeColor={C.accent}
-      helpKey="nps" source="공시 기반 자동수집" sourceUrl="https://github.com/papavhub/HemStock/actions"
+      helpKey="nps" source="공시 기반 자동수집" sourceUrl="https://dart.fss.or.kr/dsab007/main.do?option=P2"
       className="col-span-2 row-span-2">
       <InfoBox>
         국민연금은 국내 최대 기관 투자자(약 100조+). 매일 새벽 4시 GitHub Actions가 자동 갱신.
