@@ -132,13 +132,13 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
 
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
-        "crtfc_key":  KEY,
-        "corp_code":  corp_code,
-        "pblntf_ty":  "D",      # 지분공시 카테고리 (D001=대량보유, D002=임원주요주주)
-        "bgn_de":     bgn_de,
-        "end_de":     end_de,
-        "page_no":    "1",
-        "page_count": "100",
+        "crtfc_key":        KEY,
+        "corp_code":        corp_code,
+        "pblntf_detail_ty": "D001",  # 주식등의대량보유상황보고서만
+        "bgn_de":           bgn_de,
+        "end_de":           end_de,
+        "page_no":          "1",
+        "page_count":       "20",
     }
     res  = SESSION.get(url, params=params, timeout=10)
     data = res.json()
@@ -205,6 +205,10 @@ def parse_ratio_from_doc(rcept_no: str, corp_name: str):
             texts.append(content.decode("utf-8", errors="ignore"))
 
         for text in texts:
+            # 디버그: KB금융 첫 번째 문서 내용 앞부분 출력
+            if corp_name in ("KB금융", "POSCO홀딩스") and len(text) > 0:
+                print(f"    [DEBUG {corp_name}] 문서 앞 600자:")
+                print(f"    {repr(text[:600])}")
             ratio = extract_ratio_from_text(text)
             if ratio is not None:
                 return ratio
