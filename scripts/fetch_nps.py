@@ -128,16 +128,17 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
     """list.json — 특정 종목의 주식대량보유상황보고 중 국민연금 공시"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
-    bgn_de = (now - timedelta(days=88)).strftime("%Y%m%d")
+    bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")  # corp_code 있으면 1년 가능
 
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
         "crtfc_key":  KEY,
         "corp_code":  corp_code,
-        "bgn_de":     bgn_de,   # corp_code 있어도 날짜 지정 (일부 API 버전 필요)
+        "pblntf_ty":  "D",      # 지분공시 카테고리 (D001=대량보유, D002=임원주요주주)
+        "bgn_de":     bgn_de,
         "end_de":     end_de,
         "page_no":    "1",
-        "page_count": "100",   # 유형 필터 없이 최대 조회 후 client-side 필터
+        "page_count": "100",
     }
     res  = SESSION.get(url, params=params, timeout=10)
     data = res.json()
@@ -161,36 +162,52 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
 
 
 # ── Step 3: 공시 원본 XML 파싱 → 보유비율 추출 ──────────────────────
-def parse_ratio_from_doc(rcept_no: str, corp_name: str) -> float | None:
-    """document.json → ZIP → XML → 보유비율(%) 추출"""
+def extract_ratio_from_text(text: str) -> float | None:
+    """텍스트에서 보유비율 추출 (공통 로직)"""
+    # 패턴 1: XML 태그 형태
+    for tag in ("holdRto", "bndtRto", "posesnStockRto", "hold_rto"):
+        m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
+        if m:
+            v = float(m.group(1))
+            if 5.0 <= v <= 25.0:
+                return v
+    # 패턴 2: 텍스트 형태 "보유비율", "지분율"
+    for pat in [
+        r"보유\s*비율[^0-9<]{0,30}([0-9]+\.[0-9]{1,4})",
+        r"지분율[^0-9<]{0,15}([0-9]+\.[0-9]{1,4})",
+        r"([0-9]+\.[0-9]{2})\s*(?:%|％)",  # 숫자% 패턴
+    ]:
+        for m in re.finditer(pat, text):
+            v = float(m.group(1))
+            if 5.0 <= v <= 25.0:
+                return v
+    return None
+
+
+def parse_ratio_from_doc(rcept_no: str, corp_name: str):
+    """document.json → (ZIP 또는 직접 파일) → 보유비율(%) 추출"""
     url = "https://opendart.fss.or.kr/api/document.json"
     try:
         res = SESSION.get(url, params={"crtfc_key": KEY, "rcept_no": rcept_no}, timeout=20)
         res.raise_for_status()
+        content = res.content
 
-        with zipfile.ZipFile(io.BytesIO(res.content)) as z:
-            xml_files = [n for n in z.namelist() if n.lower().endswith(".xml")]
-            for fname in xml_files:
-                with z.open(fname) as f:
-                    text = f.read().decode("utf-8", errors="ignore")
+        texts = []
+        # ZIP 시도
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as z:
+                for fname in z.namelist():
+                    if fname.lower().endswith((".xml", ".html", ".htm")):
+                        with z.open(fname) as f:
+                            texts.append(f.read().decode("utf-8", errors="ignore"))
+        except zipfile.BadZipFile:
+            # ZIP이 아니면 직접 파싱 (HTML/XML 직접 반환)
+            texts.append(content.decode("utf-8", errors="ignore"))
 
-                # 패턴 1: XML 태그 형태
-                for tag in ("holdRto", "bndtRto", "posesnStockRto", "hold_rto", "stkqy_irds_irds"):
-                    m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
-                    if m:
-                        v = float(m.group(1))
-                        if 5.0 <= v <= 25.0:
-                            return v
-
-                # 패턴 2: "보유비율" 텍스트 근처 숫자
-                for pat in [
-                    r"보유\s*비율[^0-9<]{0,30}([0-9]+\.[0-9]{1,4})",
-                    r"지분율[^0-9<]{0,15}([0-9]+\.[0-9]{1,4})",
-                ]:
-                    for m in re.finditer(pat, text):
-                        v = float(m.group(1))
-                        if 5.0 <= v <= 25.0:
-                            return v
+        for text in texts:
+            ratio = extract_ratio_from_text(text)
+            if ratio is not None:
+                return ratio
 
     except Exception as e:
         print(f"    [WARN] 문서 파싱 실패 {corp_name} ({rcept_no}): {e}")
