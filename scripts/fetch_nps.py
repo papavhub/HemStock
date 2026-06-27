@@ -168,51 +168,92 @@ def extract_ratio(text: str):
     return None  # 날짜 오탐 방지: catch-all 패턴 제거
 
 
+def get_dart_doc_parts(rcept_no: str) -> list[dict]:
+    """DART 내부 API로 문서 파트 목록(dtd/offset/length 등) 조회"""
+    # DART가 뷰어 JS에서 호출하는 내부 엔드포인트들 시도
+    endpoints = [
+        ("GET",  f"https://dart.fss.or.kr/dsaf001/selectSoliConct.do?rcpNo={rcept_no}"),
+        ("POST", "https://dart.fss.or.kr/dsaf001/selectRprtFrmList.do",   {"rcpNo": rcept_no}),
+        ("POST", "https://dart.fss.or.kr/dsaf001/selectToListTemp.do",    {"rcpNo": rcept_no}),
+        ("GET",  f"https://dart.fss.or.kr/dsaf001/selectRprtFrmData.do?rcpNo={rcept_no}"),
+    ]
+    for method, url, *payload in endpoints:
+        try:
+            if method == "POST":
+                r = SESSION.post(url, data=payload[0] if payload else {}, timeout=8)
+            else:
+                r = SESSION.get(url, timeout=8)
+            if r.status_code == 200 and r.text.strip():
+                return [{"url": url, "content": r.text[:300]}]
+        except Exception:
+            pass
+    return []
+
+
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
-    """DART 공시 뷰어 (dart.fss.or.kr) HTML 스크래핑으로 보유비율 추출"""
+    """DART 공시 문서에서 보유비율 추출 (여러 경로 시도)"""
     try:
-        # 1) 메인 뷰어 페이지 (frameset)
+        # 경로 1: DART 내부 API로 실제 문서 URL 탐색
+        if corp_name == "KB금융":
+            parts = get_dart_doc_parts(rcept_no)
+            print(f"  [DEBUG KB금융] doc parts 시도 결과:")
+            for p in parts:
+                print(f"    url={p['url']}")
+                print(f"    content={repr(p['content'])}")
+
+        # 경로 2: DART 공시 원문 다운로드 URL 패턴들
+        candidate_urls = [
+            # opendart API (다른 파라미터명 시도)
+            f"https://opendart.fss.or.kr/api/document.json?crtfc_key={KEY}&rcpNo={rcept_no}",
+            # dart.fss.or.kr 직접 뷰어 (메인 페이지)
+            f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}",
+        ]
+
+        for url in candidate_urls:
+            try:
+                r = SESSION.get(url, timeout=12)
+                if r.status_code == 200 and len(r.text) > 200:
+                    ratio = extract_ratio(r.text)
+                    if ratio:
+                        return ratio
+                    # 디버그: KB금융에서 내용 앞부분 출력
+                    if corp_name == "KB금융":
+                        print(f"  [DEBUG KB금융] {url[:60]} → {len(r.text)}bytes")
+                        print(f"    앞 500자: {repr(r.text[:500])}")
+            except Exception as e:
+                if corp_name == "KB금융":
+                    print(f"  [DEBUG KB금융] {url[:60]} → 오류: {e}")
+
+        # 경로 3: DART 메인페이지 frameset → 실제 frame src 재구성
         main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
-        res      = SESSION.get(main_url, timeout=15)
+        res      = SESSION.get(main_url, timeout=12)
         soup     = BeautifulSoup(res.text, "html.parser")
 
-        # 2) 보고서 frame URL 추출
-        report_src = None
-        for tag in soup.find_all(["frame", "iframe"]):
-            src = tag.get("src", "")
-            if src and ("report" in src or "viewer" in src or "dsaf002" in src):
-                report_src = ("https://dart.fss.or.kr" + src) if src.startswith("/") else src
-                break
-
-        # 3) frame을 못 찾으면 직접 뷰어 URL 시도
-        if not report_src:
-            report_src = (
-                f"https://dart.fss.or.kr/report/viewer.do"
-                f"?rcpNo={rcept_no}&dtd=&eleId=0&offset=0&length=0&dtdDir="
+        # JavaScript 내 URL 패턴 추출 (동적 로딩 우회)
+        # 예: viewer.do?rcpNo=...&dtd=dart3.xsd&eleId=1&offset=0&length=12345
+        js_match = re.search(
+            r"viewer\.do\?[^'\"]*rcpNo[^'\"]*dtd[^'\"]*length=([0-9]+)[^'\"]*",
+            res.text
+        )
+        if js_match:
+            # JS에서 URL 전체 추출
+            full_url_match = re.search(
+                r"['\"]([^'\"]*viewer\.do[^'\"]*rcpNo[^'\"]*length=[0-9]+[^'\"]*)['\"]",
+                res.text
             )
+            if full_url_match:
+                doc_url = full_url_match.group(1)
+                if not doc_url.startswith("http"):
+                    doc_url = "https://dart.fss.or.kr" + doc_url
+                r2 = SESSION.get(doc_url, timeout=12)
+                ratio = extract_ratio(r2.text)
+                if ratio:
+                    return ratio
 
-        res2  = SESSION.get(report_src, timeout=15)
-
-        # 디버그: KB금융 HTML 구조 출력
-        if corp_name == "KB금융":
-            print(f"  [DEBUG KB금융] 메인 frame 수: {len(soup.find_all(['frame','iframe']))}")
-            for fr in soup.find_all(['frame','iframe']):
-                print(f"    frame src={repr(fr.get('src',''))[:80]}")
-            print(f"  [DEBUG KB금융] report_src={repr(report_src)[:100]}")
-            print(f"  [DEBUG KB금융] res2 status={res2.status_code}")
-            txt_sample = res2.text[:1500].replace('\n',' ')
-            print(f"  [DEBUG KB금융] res2 앞 1500자: {repr(txt_sample)}")
-
-        ratio = extract_ratio(res2.text)
-        if ratio:
-            return ratio
-
-        # 4) 메인 페이지 자체에서도 시도 (일부 공시는 인라인)
-        ratio = extract_ratio(res.text)
-        return ratio
+        return None
 
     except Exception as e:
-        print(f"    [WARN] 뷰어 파싱 실패 {corp_name} ({rcept_no}): {e}")
+        print(f"    [WARN] 파싱 실패 {corp_name} ({rcept_no}): {e}")
         return None
 
 
