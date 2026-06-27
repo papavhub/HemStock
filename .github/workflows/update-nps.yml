@@ -1,23 +1,16 @@
-name: 💡 국민연금 포트폴리오 자동 갱신 & Pages 배포
+name: 💡 시장 데이터 자동 갱신 & Pages 배포
 
 on:
-  # 매일 한국 시간 04:00 = UTC 19:00 (전일)
   schedule:
-    - cron: '0 19 * * *'
-
-  # 수동 실행 버튼
+    - cron: '0 19 * * *'   # 매일 KST 04:00 (UTC 19:00)
   workflow_dispatch:
-
-  # main 브랜치 push 시 Pages 배포도 같이
   push:
-    branches:
-      - main
+    branches: [main]
 
-# GitHub Pages 배포에 필요한 권한
 permissions:
-  contents: write        # 파일 커밋/푸시
-  pages: write           # Pages 배포
-  id-token: write        # OIDC 인증 (Pages)
+  contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -25,12 +18,11 @@ concurrency:
 
 jobs:
   # ─────────────────────────────────────────
-  # Job 1: 데이터 수집 (schedule / workflow_dispatch 트리거 시)
+  # Job 1: 데이터 수집 (schedule / workflow_dispatch)
   # ─────────────────────────────────────────
   fetch-data:
-    name: 📥 NPS 데이터 수집
+    name: 📥 시장 데이터 수집
     runs-on: ubuntu-latest
-    # push 이벤트는 데이터 수집 건너뜀 (이미 커밋된 상태)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     outputs:
       changed: ${{ steps.check.outputs.changed }}
@@ -51,18 +43,21 @@ jobs:
       - name: 의존성 설치
         run: pip install -r scripts/requirements.txt
 
-      - name: 국민연금 데이터 수집 실행
+      - name: 국민연금 포트폴리오 수집
         run: python scripts/fetch_nps.py
+
+      - name: 시장 핵심 지표 수집 (VIX / 금리 / DXY / S&P500)
+        run: python scripts/fetch_market_data.py
 
       - name: 변경 여부 확인
         id: check
         run: |
-          if git diff --quiet public/data/nps.json; then
+          if git diff --quiet public/data/; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "nps.json 변경 없음 — 커밋 건너뜀"
+            echo "데이터 변경 없음"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "nps.json 변경 감지"
+            git diff --name-only public/data/
           fi
 
       - name: 변경 사항 커밋 & 푸시
@@ -70,8 +65,8 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/nps.json
-          git commit -m "💡 자동 업데이트: 국민연금 포트폴리오 데이터"
+          git add public/data/
+          git commit -m "💡 자동 업데이트: 시장 데이터 (NPS + VIX/금리/DXY)"
           git push
 
   # ─────────────────────────────────────────
@@ -80,7 +75,6 @@ jobs:
   deploy:
     name: 🚀 빌드 & Pages 배포
     runs-on: ubuntu-latest
-    # 데이터 수집 job이 있을 때는 완료 후 실행, push 이벤트는 바로 실행
     needs: [fetch-data]
     if: |
       always() && (
@@ -94,10 +88,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: 저장소 체크아웃 (최신 커밋 포함)
+      - name: 저장소 체크아웃 (최신 커밋)
         uses: actions/checkout@v4
         with:
-          ref: main        # 데이터 수집 후 push된 최신 커밋 사용
+          ref: main
 
       - name: Node.js 20 설정
         uses: actions/setup-node@v4
