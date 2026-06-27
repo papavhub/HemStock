@@ -218,8 +218,18 @@ def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
                         return ratio
                     # 디버그: KB금융에서 내용 앞부분 출력
                     if corp_name == "KB금융":
-                        print(f"  [DEBUG KB금융] {url[:60]} → {len(r.text)}bytes")
-                        print(f"    앞 500자: {repr(r.text[:500])}")
+                        txt = r.text
+                        print(f"  [DEBUG KB금융] {url[:60]} → {len(txt)}bytes")
+                        # "보유비율" 위치 찾기
+                        idx = txt.find("보유비율")
+                        if idx == -1:
+                            idx = txt.find("보유 비율")
+                        if idx >= 0:
+                            print(f"    '보유비율' 발견 위치 {idx}, 주변 300자:")
+                            print(f"    {repr(txt[max(0,idx-50):idx+250])}")
+                        else:
+                            print(f"    '보유비율' 텍스트 없음. 앞 800자:")
+                            print(f"    {repr(txt[:800])}")
             except Exception as e:
                 if corp_name == "KB금융":
                     print(f"  [DEBUG KB금융] {url[:60]} → 오류: {e}")
