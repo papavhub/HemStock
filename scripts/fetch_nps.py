@@ -192,6 +192,17 @@ def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
             )
 
         res2  = SESSION.get(report_src, timeout=15)
+
+        # 디버그: KB금융 HTML 구조 출력
+        if corp_name == "KB금융":
+            print(f"  [DEBUG KB금융] 메인 frame 수: {len(soup.find_all(['frame','iframe']))}")
+            for fr in soup.find_all(['frame','iframe']):
+                print(f"    frame src={repr(fr.get('src',''))[:80]}")
+            print(f"  [DEBUG KB금융] report_src={repr(report_src)[:100]}")
+            print(f"  [DEBUG KB금융] res2 status={res2.status_code}")
+            txt_sample = res2.text[:1500].replace('\n',' ')
+            print(f"  [DEBUG KB금융] res2 앞 1500자: {repr(txt_sample)}")
+
         ratio = extract_ratio(res2.text)
         if ratio:
             return ratio
