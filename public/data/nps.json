@@ -1,86 +1,78 @@
 {
-  "updated_at": "2026-06-27 22:56 KST [fallback]",
-  "source": "fallback — 과거 공시 기준 하드코딩",
+  "updated_at": "2026-06-27 23:01 KST",
+  "source": "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
-      "rank": 1,
-      "name": "삼성전자",
-      "value": 8.26,
-      "change": 0.1,
-      "amount": "지분율 8.26% (공시기준)",
-      "rcept_dt": "2025-03-10"
+      "name": "고려아연",
+      "value": 10.01,
+      "change": 0.0,
+      "amount": "지분율 10.01%",
+      "rcept_dt": "2025-10-01",
+      "rank": 1
     },
     {
-      "rank": 2,
-      "name": "기아",
-      "value": 9.12,
-      "change": -0.2,
-      "amount": "지분율 9.12% (공시기준)",
-      "rcept_dt": "2025-03-01"
+      "name": "한화에어로스페이스",
+      "value": 8.27,
+      "change": 0.0,
+      "amount": "지분율 8.27%",
+      "rcept_dt": "2025-08-27",
+      "rank": 2
     },
     {
-      "rank": 3,
+      "name": "LG전자",
+      "value": 8.01,
+      "change": 0.0,
+      "amount": "지분율 8.01%",
+      "rcept_dt": "2025-08-01",
+      "rank": 3
+    },
+    {
+      "name": "삼성SDI",
+      "value": 7.02,
+      "change": 0.0,
+      "amount": "지분율 7.02%",
+      "rcept_dt": "2025-07-02",
+      "rank": 4
+    },
+    {
+      "name": "HD현대중공업",
+      "value": 7.02,
+      "change": 0.0,
+      "amount": "지분율 7.02%",
+      "rcept_dt": "2025-07-02",
+      "rank": 5
+    },
+    {
       "name": "POSCO홀딩스",
-      "value": 9.67,
-      "change": 0.15,
-      "amount": "지분율 9.67% (공시기준)",
-      "rcept_dt": "2025-02-15"
+      "value": 6.23,
+      "change": 0.0,
+      "amount": "지분율 6.23%",
+      "rcept_dt": "2026-06-23",
+      "rank": 6
     },
     {
-      "rank": 4,
       "name": "KB금융",
-      "value": 9.23,
-      "change": 0.1,
-      "amount": "지분율 9.23% (공시기준)",
-      "rcept_dt": "2025-02-28"
-    },
-    {
-      "rank": 5,
-      "name": "현대차",
-      "value": 8.41,
+      "value": 6.17,
       "change": 0.0,
-      "amount": "지분율 8.41% (공시기준)",
-      "rcept_dt": "2025-03-05"
+      "amount": "지분율 6.17%",
+      "rcept_dt": "2026-06-17",
+      "rank": 7
     },
     {
-      "rank": 6,
-      "name": "하나금융지주",
-      "value": 8.91,
-      "change": 0.05,
-      "amount": "지분율 8.91% (공시기준)",
-      "rcept_dt": "2025-02-22"
-    },
-    {
-      "rank": 7,
-      "name": "신한지주",
-      "value": 8.44,
+      "name": "한국전력공사",
+      "value": 6.01,
       "change": 0.0,
-      "amount": "지분율 8.44% (공시기준)",
-      "rcept_dt": "2025-03-08"
+      "amount": "지분율 6.01%",
+      "rcept_dt": "2026-06-01",
+      "rank": 8
     },
     {
-      "rank": 8,
-      "name": "SK하이닉스",
-      "value": 6.94,
-      "change": 0.3,
-      "amount": "지분율 6.94% (공시기준)",
-      "rcept_dt": "2025-02-20"
-    },
-    {
-      "rank": 9,
-      "name": "LG에너지솔루션",
-      "value": 6.12,
-      "change": -0.1,
-      "amount": "지분율 6.12% (공시기준)",
-      "rcept_dt": "2025-01-30"
-    },
-    {
-      "rank": 10,
-      "name": "삼성바이오로직스",
-      "value": 5.8,
-      "change": 0.05,
-      "amount": "지분율 5.80% (공시기준)",
-      "rcept_dt": "2025-02-10"
+      "name": "현대글로비스",
+      "value": 5.06,
+      "change": -3.21,
+      "amount": "지분율 5.06%",
+      "rcept_dt": "2026-05-06",
+      "rank": 9
     }
   ]
 }
