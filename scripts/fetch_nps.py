@@ -41,34 +41,37 @@ FALLBACK = [
 
 
 # ── Step 1: 국민연금 대량보유 보고 목록 ──────────────────────────
-def get_nps_filing_list() -> list[dict]:
-    """DART list.json — 최근 1년 국민연금 대량보유 보고 목록"""
+def get_nps_filing_list():
+    """DART list.json — 국민연금 대량보유 보고 목록 (flr_nm 파라미터로 직접 필터)"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
     bgn_de = (now - timedelta(days=88)).strftime("%Y%m%d")  # corp_code 없이 최대 3개월
 
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
-        "crtfc_key":         KEY,
-        "pblntf_detail_ty":  "I001",   # 주식대량보유상황보고
-        "bgn_de":            bgn_de,
-        "end_de":            end_de,
-        "page_no":           "1",
-        "page_count":        "100",
+        "crtfc_key":        KEY,
+        "pblntf_detail_ty": "I001",   # 주식대량보유상황보고
+        "flr_nm":           "국민연금",  # 제출자명 필터 (서버 측 필터링)
+        "bgn_de":           bgn_de,
+        "end_de":           end_de,
+        "page_no":          "1",
+        "page_count":       "100",
     }
     res  = SESSION.get(url, params=params, timeout=15)
     res.raise_for_status()
     data = res.json()
 
-    print(f"  list.json → status={data.get('status')} msg={data.get('message')} total={data.get('total_count',0)}")
-
+    total      = data.get("total_count", 0)
     all_filings = data.get("list", [])
-    # 보고자(flr_nm)에 '국민연금' 포함된 것만
+    print(f"  list.json → status={data.get('status')} msg={data.get('message')} total={total}")
+    print(f"  국민연금 보고: {len(all_filings)}건 반환 (서버 필터 적용)")
+
+    # 혹시 flr_nm 필터가 부분 일치로 다른 제출자가 섞일 경우 재확인
     nps = [f for f in all_filings if "국민연금" in f.get("flr_nm", "")]
-    print(f"  국민연금 보고: {len(nps)}건 (전체 {len(all_filings)}건 중)")
+    print(f"  클라이언트 재확인: {len(nps)}건")
 
     # corp별 최신 보고만 유지
-    latest: dict[str, dict] = {}
+    latest = {}
     for f in nps:
         c = f["corp_code"]
         if c not in latest or f["rcept_dt"] > latest[c]["rcept_dt"]:
