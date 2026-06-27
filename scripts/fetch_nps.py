@@ -109,6 +109,11 @@ def get_hold_ratio(corp_code: str, corp_name: str):
             return None
 
         items     = data.get("list", [])
+        # 디버그: 삼성전자(00126380)일 때 repror 필드 샘플 출력
+        if corp_code == "00126380" and items:
+            print(f"    [DEBUG 삼성전자] 총 {len(items)}건, repror 샘플:")
+            for it in items[:5]:
+                print(f"      repror={repr(it.get('repror',''))}  hold_ratio={it.get('hold_ratio','')}  rcept_dt={it.get('rcept_dt','')}")
         nps_items = [i for i in items if "국민연금" in i.get("repror", "")]
         if not nps_items:
             return None
