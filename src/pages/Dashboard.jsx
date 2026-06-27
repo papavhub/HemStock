@@ -752,8 +752,8 @@ function NpsWidget() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b" style={{ borderColor: C.border }}>
-                  {['순위','종목','비중(%)','전월比','추정금액'].map(h => (
-                    <th key={h} className={`pb-2 font-normal ${h==='추정금액'?'text-right hidden sm:table-cell':h==='순위'?'text-left':'text-right'}`}
+                  {['순위','종목','비중(%)','전월比','공시일'].map(h => (
+                    <th key={h} className={`pb-2 font-normal ${h==='공시일'?'text-right hidden sm:table-cell':h==='순위'?'text-left':'text-right'}`}
                       style={{ color: C.muted }}>{h}</th>
                   ))}
                 </tr>
@@ -771,7 +771,9 @@ function NpsWidget() {
                       style={{ color: s.change > 0 ? C.green : s.change < 0 ? C.red : C.muted }}>
                       {s.change > 0 ? '+' : ''}{s.change?.toFixed(1)}%
                     </td>
-                    <td className="py-2 text-right hidden sm:table-cell" style={{ color: C.muted }}>{s.amount}</td>
+                    <td className="py-2 text-right hidden sm:table-cell" style={{ color: C.muted }}>
+                      {s.rcept_dt ? s.rcept_dt.slice(5) : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -130,7 +130,7 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
     params = {
         "crtfc_key":        KEY,
         "corp_code":        corp_code,
-        "pblntf_detail_ty": "I001",   # 주식대량보유상황보고
+        "pblntf_detail_ty": "D001",   # 주식등의대량보유상황보고서 (지분공시)
         "page_no":          "1",
         "page_count":       "20",
     }
