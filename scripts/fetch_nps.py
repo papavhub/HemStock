@@ -124,15 +124,39 @@ def get_nps_filings(corp_code: str) -> list[dict]:
 
 # ── Step 3: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
 def extract_ratio(text: str):
-    """HTML 테이블에서 보유비율 추출 — BeautifulSoup 우선, 날짜 오탐 방지"""
+    """HTML 테이블에서 보유비율 추출 — '이번보고서' 국민연금 행 우선, 날짜 오탐 방지"""
     soup = BeautifulSoup(text, "html.parser")
 
-    # ① 테이블 셀에서 "보유비율" 또는 "지분율" 텍스트를 찾고 인접 셀 값 파싱
+    # ① 국민연금 행에서 직접 비율 추출 (viewer section은 이미 보유비율 섹션만 포함)
+    #    이번보고서 행 우선, 없으면 국민연금 포함 행 중 마지막
+    best_ratio = None
+    for row in soup.find_all("tr"):
+        row_text = row.get_text()
+        if "국민연금" not in row_text:
+            continue
+        tds = row.find_all("td")
+        row_ratios = []
+        for td in tds:
+            raw = td.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "")
+            try:
+                v = float(raw)
+                if 5.0 <= v <= 25.0:
+                    row_ratios.append(v)
+            except ValueError:
+                pass
+        if row_ratios:
+            if "이번보고서" in row_text:
+                return row_ratios[0]   # 이번보고서 행 발견 시 즉시 반환
+            best_ratio = row_ratios[0]  # fallback: 마지막 국민연금 행
+
+    if best_ratio is not None:
+        return best_ratio
+
+    # ② 테이블 셀에서 "보유비율" 또는 "지분율" 텍스트를 찾고 인접 셀 값 파싱
     keywords = ("보유비율", "보유 비율", "지분율", "보유주식비율")
     for cell in soup.find_all(["td", "th"]):
         cell_txt = cell.get_text(strip=True).replace(" ", "")
         if any(kw.replace(" ", "") in cell_txt for kw in keywords):
-            # 다음 td 또는 다음다음 td에서 숫자 추출
             for sibling in [cell.find_next_sibling("td"),
                             cell.find_next("td")]:
                 if sibling is None:
@@ -143,14 +167,13 @@ def extract_ratio(text: str):
                     if 5.0 <= v <= 25.0:
                         return v
                 except ValueError:
-                    # 숫자만 추출
                     m = re.search(r"([0-9]+\.[0-9]{1,4})", raw)
                     if m:
                         v = float(m.group(1))
                         if 5.0 <= v <= 25.0:
                             return v
 
-    # ② XML 태그 형태 (XBRL)
+    # ③ XML 태그 형태 (XBRL)
     for tag in ("holdRto", "bndtRto", "posesnStockRto"):
         m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
         if m:
@@ -158,7 +181,7 @@ def extract_ratio(text: str):
             if 5.0 <= v <= 25.0:
                 return v
 
-    # ③ "보유비율" 뒤에 바로 % 붙은 패턴 — 날짜 오탐 방지 위해 % 필수
+    # ④ "보유비율" 뒤에 바로 % 붙은 패턴 — 날짜 오탐 방지 위해 % 필수
     m = re.search(r"보유\s*비율[^0-9<]{0,60}([0-9]+\.[0-9]{1,4})\s*(?:%|％)", text)
     if m:
         v = float(m.group(1))
@@ -177,20 +200,12 @@ def parse_viewer_params(html: str, corp_name: str = ""):
         html
     )
     if not text_m:
-        if corp_name == "KB금융":
-            print(f"  [DEBUG KB금융] JS에서 '보유비율' node 못 찾음")
-            idx = html.find("보유비율")
-            if idx >= 0:
-                print(f"    '보유비율' 위치={idx}, 주변: {repr(html[max(0,idx-30):idx+80])}")
         return None
 
     var_name  = text_m.group(1)
     start_pos = text_m.start()
     # 해당 노드 블록 (최대 800자) 추출
     section   = html[start_pos : start_pos + 800]
-
-    if corp_name == "KB금융":
-        print(f"  [DEBUG KB금융] 노드변수={var_name}, 섹션: {repr(section[:300])}")
 
     # 단계 2: 각 파라미터를 개별 추출
     params = {}
@@ -201,9 +216,6 @@ def parse_viewer_params(html: str, corp_name: str = ""):
         )
         if m:
             params[key] = m.group(1)
-
-    if corp_name == "KB금융":
-        print(f"  [DEBUG KB금융] 추출 파라미터: {params}")
 
     if len(params) < 5:
         return None
