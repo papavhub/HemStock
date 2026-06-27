@@ -168,30 +168,46 @@ def extract_ratio(text: str):
     return None  # 날짜 오탐 방지: catch-all 패턴 제거
 
 
-def parse_viewer_params(html: str) -> dict | None:
+def parse_viewer_params(html: str, corp_name: str = ""):
     """dsaf001/main.do HTML의 JS에서 '보유비율' 섹션 viewer 파라미터 추출"""
-    # JS 구조 예:
-    # node2['text'] = "3. 보유주식등의 수 및 보유비율";
-    # node2['dcmNo'] = "11436159"; node2['eleId'] = "9";
-    # node2['offset'] = "31475"; node2['length'] = "4937"; node2['dtd'] = "dart4.xsd";
-    m = re.search(
-        r"node\w+\['text'\]\s*=\s*\"[^\"]*보유비율[^\"]*\";"
-        r".*?node\w+\['dcmNo'\]\s*=\s*\"(\d+)\";"
-        r".*?node\w+\['eleId'\]\s*=\s*\"(\d+)\";"
-        r".*?node\w+\['offset'\]\s*=\s*\"(\d+)\";"
-        r".*?node\w+\['length'\]\s*=\s*\"(\d+)\";"
-        r".*?node\w+\['dtd'\]\s*=\s*\"([^\"]+)\"",
-        html, re.DOTALL
+    # JS 구조: nodeX['text'] = "... 보유비율 ..."; nodeX['dcmNo'] = "..."; ...
+    # 단계 1: '보유비율' 텍스트가 있는 노드 변수명과 위치 찾기
+    text_m = re.search(
+        r"(node\w+)\[.text.\]\s*=\s*[\"'][^\"']*보유비율[^\"']*[\"']",
+        html
     )
-    if not m:
+    if not text_m:
+        if corp_name == "KB금융":
+            print(f"  [DEBUG KB금융] JS에서 '보유비율' node 못 찾음")
+            idx = html.find("보유비율")
+            if idx >= 0:
+                print(f"    '보유비율' 위치={idx}, 주변: {repr(html[max(0,idx-30):idx+80])}")
         return None
-    return {
-        "dcmNo":  m.group(1),
-        "eleId":  m.group(2),
-        "offset": m.group(3),
-        "length": m.group(4),
-        "dtd":    m.group(5),
-    }
+
+    var_name  = text_m.group(1)
+    start_pos = text_m.start()
+    # 해당 노드 블록 (최대 800자) 추출
+    section   = html[start_pos : start_pos + 800]
+
+    if corp_name == "KB금융":
+        print(f"  [DEBUG KB금융] 노드변수={var_name}, 섹션: {repr(section[:300])}")
+
+    # 단계 2: 각 파라미터를 개별 추출
+    params = {}
+    for key in ("dcmNo", "eleId", "offset", "length", "dtd"):
+        m = re.search(
+            rf"{re.escape(var_name)}\[.{key}.\]\s*=\s*[\"']([^\"']+)[\"']",
+            section
+        )
+        if m:
+            params[key] = m.group(1)
+
+    if corp_name == "KB금융":
+        print(f"  [DEBUG KB금융] 추출 파라미터: {params}")
+
+    if len(params) < 5:
+        return None
+    return params
 
 
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
@@ -203,7 +219,7 @@ def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
         main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
         res      = SESSION.get(main_url, timeout=15)
 
-        params = parse_viewer_params(res.text)
+        params = parse_viewer_params(res.text, corp_name)
         if not params:
             return None
 
