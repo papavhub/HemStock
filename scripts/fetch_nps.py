@@ -128,11 +128,10 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
     """list.json — 특정 종목의 주식대량보유상황보고 중 국민연금 공시"""
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
-        "crtfc_key":        KEY,
-        "corp_code":        corp_code,
-        "pblntf_detail_ty": "D001",   # 주식등의대량보유상황보고서 (지분공시)
-        "page_no":          "1",
-        "page_count":       "20",
+        "crtfc_key":  KEY,
+        "corp_code":  corp_code,
+        "page_no":    "1",
+        "page_count": "100",   # 유형 필터 없이 최대 조회 후 client-side 필터
     }
     res  = SESSION.get(url, params=params, timeout=10)
     data = res.json()
@@ -143,13 +142,15 @@ def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
 
     items = data.get("list", [])
 
-    # 디버그: 삼성전자는 모든 flr_nm 출력
+    # 디버그: 삼성전자는 모든 공시 유형 출력 (어떤 pblntf_detail_ty가 대량보유인지 확인)
     if corp_code == "00126380":
-        print(f"  [DEBUG 삼성전자] I001 공시 {len(items)}건:")
-        for it in items[:8]:
-            print(f"    flr_nm={repr(it.get('flr_nm',''))}  rcept_dt={it.get('rcept_dt','')}  report_nm={it.get('report_nm','')[:30]}")
+        print(f"  [DEBUG 삼성전자] 전체 공시 {len(items)}건 (total={data.get('total_count',0)}):")
+        for it in items[:15]:
+            print(f"    flr_nm={repr(it.get('flr_nm',''))[:20]}  ty={it.get('pblntf_detail_ty','')}  report_nm={it.get('report_nm','')[:35]}")
 
-    nps = [i for i in items if "국민연금" in i.get("flr_nm", "")]
+    # 국민연금 + 대량보유 관련 공시만 필터
+    nps = [i for i in items if "국민연금" in i.get("flr_nm", "")
+           or "국민연금" in i.get("report_nm", "")]
     return sorted(nps, key=lambda x: x.get("rcept_dt", ""), reverse=True)
 
 
@@ -205,7 +206,7 @@ def fetch_all() -> list[dict]:
         corp_map = dict(DART_CORPS)
 
     stocks = []
-    print(f"\n  국민연금 I001 공시 조회 ({len(corp_map)}종목)...")
+    print(f"\n  국민연금 대량보유 공시 조회 ({len(corp_map)}종목)...")
 
     for corp_name, corp_code in corp_map.items():
         try:
