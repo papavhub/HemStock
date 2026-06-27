@@ -1,9 +1,9 @@
 """
 국민연금 포트폴리오 수집 — 금감원 DART OpenAPI
 전략:
-  1) list.json으로 국민연금 대량보유 보고 목록 수집 (보고자=국민연금공단)
-  2) 각 보고의 corp_code로 majorstock.json 호출 → 최신 보유 비율 추출
-  3) 전부 실패 시 fallback (분기 공시 기준 하드코딩)
+  KOSPI 주요 50종목 corp_code를 직접 지정 → majorstock.json 호출
+  → 국민연금(repror 필드)이 5%↑ 보유한 종목만 추출
+  → 전부 실패 시 fallback (하드코딩)
 
 환경변수: DART_API_KEY (GitHub Secret)
 결과: public/data/nps.json
@@ -11,7 +11,6 @@
 
 import json
 import os
-import sys
 import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -25,6 +24,60 @@ KEY  = os.environ.get("DART_API_KEY", "").strip()
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HemStock/1.0; +https://github.com/papavhub/HemStock)"}
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
+
+# KOSPI 주요 종목 DART corp_code (시가총액 상위 50개)
+KOSPI_CORPS = [
+    ("00126380", "삼성전자"),
+    ("00164779", "SK하이닉스"),
+    ("00401731", "LG에너지솔루션"),
+    ("00739422", "삼성바이오로직스"),
+    ("00164742", "현대차"),
+    ("00164588", "기아"),
+    ("00430964", "POSCO홀딩스"),
+    ("00204254", "KB금융"),
+    ("00222757", "신한지주"),
+    ("00229613", "하나금융지주"),
+    ("00581614", "우리금융지주"),
+    ("00113573", "삼성물산"),
+    ("00126186", "삼성SDI"),
+    ("00164050", "현대모비스"),
+    ("00117617", "LG화학"),
+    ("00160416", "SK이노베이션"),
+    ("00277423", "카카오"),
+    ("00293886", "NAVER"),
+    ("00138321", "두산에너빌리티"),
+    ("00120182", "고려아연"),
+    ("00109872", "한국전력"),
+    ("00164956", "현대제철"),
+    ("00126439", "삼성전기"),
+    ("00105262", "KT"),
+    ("00104711", "SK텔레콤"),
+    ("00144346", "LG전자"),
+    ("00104781", "포스코"),
+    ("00108897", "한화에어로스페이스"),
+    ("00500032", "셀트리온"),
+    ("00547583", "카카오뱅크"),
+    ("00221905", "삼성생명"),
+    ("00150577", "한국조선해양"),
+    ("00154587", "현대중공업"),
+    ("00178902", "현대글로비스"),
+    ("00114467", "S-Oil"),
+    ("00160715", "SK"),
+    ("00110776", "LG"),
+    ("00113177", "롯데케미칼"),
+    ("00104830", "KT&G"),
+    ("00259960", "HMM"),
+    ("00124534", "한미약품"),
+    ("00133427", "유한양행"),
+    ("00105088", "농심"),
+    ("00105666", "오리온"),
+    ("00142429", "아모레퍼시픽"),
+    ("00344672", "크래프톤"),
+    ("00296747", "카카오페이"),
+    ("00179024", "한진칼"),
+    ("00113028", "대한항공"),
+    ("00187939", "삼성중공업"),
+]
 
 FALLBACK = [
     {"rank":1,  "name":"삼성전자",        "value":8.26,"change": 0.10,"amount":"지분율 8.26% (공시기준)","rcept_dt":"2025-03-10"},
@@ -40,48 +93,8 @@ FALLBACK = [
 ]
 
 
-# ── Step 1: 국민연금 대량보유 보고 목록 ──────────────────────────
-def get_nps_filing_list():
-    """DART list.json — 국민연금 대량보유 보고 목록 (flr_nm 파라미터로 직접 필터)"""
-    now    = datetime.now(KST)
-    end_de = now.strftime("%Y%m%d")
-    bgn_de = (now - timedelta(days=88)).strftime("%Y%m%d")  # corp_code 없이 최대 3개월
-
-    url    = "https://opendart.fss.or.kr/api/list.json"
-    params = {
-        "crtfc_key":        KEY,
-        "pblntf_detail_ty": "I001",   # 주식대량보유상황보고
-        "flr_nm":           "국민연금",  # 제출자명 필터 (서버 측 필터링)
-        "bgn_de":           bgn_de,
-        "end_de":           end_de,
-        "page_no":          "1",
-        "page_count":       "100",
-    }
-    res  = SESSION.get(url, params=params, timeout=15)
-    res.raise_for_status()
-    data = res.json()
-
-    total      = data.get("total_count", 0)
-    all_filings = data.get("list", [])
-    print(f"  list.json → status={data.get('status')} msg={data.get('message')} total={total}")
-    print(f"  국민연금 보고: {len(all_filings)}건 반환 (서버 필터 적용)")
-
-    # 혹시 flr_nm 필터가 부분 일치로 다른 제출자가 섞일 경우 재확인
-    nps = [f for f in all_filings if "국민연금" in f.get("flr_nm", "")]
-    print(f"  클라이언트 재확인: {len(nps)}건")
-
-    # corp별 최신 보고만 유지
-    latest = {}
-    for f in nps:
-        c = f["corp_code"]
-        if c not in latest or f["rcept_dt"] > latest[c]["rcept_dt"]:
-            latest[c] = f
-    return list(latest.values())
-
-
-# ── Step 2: corp_code별 보유 비율 조회 ──────────────────────────
 def get_hold_ratio(corp_code: str, corp_name: str):
-    """DART majorstock.json — 특정 종목 국민연금 최신 보유 비율"""
+    """DART majorstock.json — 특정 종목 국민연금 보유 비율 조회"""
     url    = "https://opendart.fss.or.kr/api/majorstock.json"
     params = {"crtfc_key": KEY, "corp_code": corp_code}
     try:
@@ -90,7 +103,9 @@ def get_hold_ratio(corp_code: str, corp_name: str):
         data = res.json()
 
         if data.get("status") != "000":
-            print(f"    majorstock {corp_name}: status={data.get('status')} {data.get('message')}")
+            # 010 = 데이터 없음 (정상적으로 공시 없는 종목) — 로그 생략
+            if data.get("status") != "010":
+                print(f"    [{corp_name}] status={data.get('status')} {data.get('message')}")
             return None
 
         items     = data.get("list", [])
@@ -98,60 +113,45 @@ def get_hold_ratio(corp_code: str, corp_name: str):
         if not nps_items:
             return None
 
-        latest    = sorted(nps_items, key=lambda x: x.get("rcept_dt",""), reverse=True)[0]
+        latest    = sorted(nps_items, key=lambda x: x.get("rcept_dt", ""), reverse=True)[0]
         ratio     = float(latest.get("hold_ratio") or 0)
         if ratio < 5.0:
-            return None
+            return None  # 5% 미만은 대량보유 아님
 
         prev_items = [i for i in nps_items if i["rcept_dt"] < latest["rcept_dt"]]
         prev_ratio = float(prev_items[0].get("hold_ratio") or ratio) if prev_items else ratio
         change     = round(ratio - prev_ratio, 2)
 
-        dt = latest.get("rcept_dt","")
+        dt = latest.get("rcept_dt", "")
         return {
             "name":     corp_name,
             "value":    round(ratio, 2),
             "change":   change,
             "amount":   f"지분율 {ratio:.2f}%",
-            "rcept_dt": f"{dt[:4]}-{dt[4:6]}-{dt[6:]}" if len(dt)==8 else dt,
+            "rcept_dt": f"{dt[:4]}-{dt[4:6]}-{dt[6:]}" if len(dt) == 8 else dt,
         }
     except Exception as e:
-        print(f"    majorstock {corp_name}({corp_code}): {e}")
+        print(f"    [{corp_name}] 오류: {e}")
         return None
 
 
-# ── 메인 ─────────────────────────────────────────────────────────
-def fetch_all() -> list[dict]:
-    # API 키 확인
+def fetch_all():
     if not KEY:
         print("  [ERROR] DART_API_KEY 환경변수가 비어 있습니다.")
-        print("  GitHub Secret 'DART_API_KEY' 를 확인해주세요.")
         return []
 
     print(f"  API 키 확인: {'*' * 8}{KEY[-4:]} (마지막 4자리)")
+    print(f"  조회 대상: KOSPI 주요 {len(KOSPI_CORPS)}종목 → majorstock.json")
 
-    # Step 1: 보고 목록 수집
-    try:
-        filings = get_nps_filing_list()
-    except Exception as e:
-        print(f"  [ERROR] list.json 호출 실패: {e}")
-        return []
-
-    if not filings:
-        print("  [WARN] 국민연금 보고 목록이 비어 있습니다.")
-        return []
-
-    # Step 2: 각 종목 보유 비율 조회
     stocks = []
-    print(f"\n  보유 비율 조회 ({len(filings)}종목)...")
-    for f in filings:
-        corp_code = f.get("corp_code","")
-        corp_name = f.get("corp_name","")
-        result    = get_hold_ratio(corp_code, corp_name)
+    for i, (corp_code, corp_name) in enumerate(KOSPI_CORPS, 1):
+        result = get_hold_ratio(corp_code, corp_name)
         if result:
             stocks.append(result)
             print(f"  ✓ {corp_name:<18} {result['value']:.2f}%  변동 {result['change']:+.2f}%  ({result['rcept_dt']})")
-        time.sleep(0.2)
+        if i % 10 == 0:
+            print(f"  ... {i}/{len(KOSPI_CORPS)} 진행 중")
+        time.sleep(0.15)  # API 속도 제한 방지
 
     stocks.sort(key=lambda x: x["value"], reverse=True)
     for i, s in enumerate(stocks, 1):
@@ -171,7 +171,7 @@ def main():
     stocks = fetch_all()
 
     if stocks:
-        source = "금감원 DART OpenAPI — 대량보유상황보고 (현재 보유 기준, 최신 공시)"
+        source = "금감원 DART OpenAPI — majorstock.json (5%↑ 대량보유, 최신 공시 기준)"
     else:
         print("\n  ⚠ DART 수집 실패 → fallback 데이터 사용")
         stocks     = FALLBACK
