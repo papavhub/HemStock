@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #0a0e14;
+    color: #cdd6e0;
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0e14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e2d40;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1a73e8;
+  }
+}
+
+@layer components {
+  .widget-card {
+    @apply bg-[#0f1520] border border-[#1e2d40] rounded-lg overflow-hidden;
+  }
+
+  .widget-header {
+    @apply flex items-center justify-between px-4 py-2 border-b border-[#1e2d40] bg-[#0d1b2a];
+  }
+
+  .widget-title {
+    @apply text-xs font-semibold tracking-widest uppercase text-[#5a7080];
+  }
+
+  .badge-green {
+    @apply text-xs px-2 py-0.5 rounded bg-[#00c853]/10 text-[#00c853] border border-[#00c853]/20;
+  }
+
+  .badge-red {
+    @apply text-xs px-2 py-0.5 rounded bg-[#f44336]/10 text-[#f44336] border border-[#f44336]/20;
+  }
+
+  .badge-yellow {
+    @apply text-xs px-2 py-0.5 rounded bg-[#ffd600]/10 text-[#ffd600] border border-[#ffd600]/20;
+  }
+
+  .badge-blue {
+    @apply text-xs px-2 py-0.5 rounded bg-[#1a73e8]/10 text-[#1a73e8] border border-[#1a73e8]/20;
+  }
+
+  .stat-value {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-[10px] uppercase tracking-widest text-[#5a7080];
+  }
+
+  .sidebar-section {
+    @apply border-b border-[#1e2d40] pb-4 mb-4;
+  }
+
+  .checklist-item {
+    @apply flex items-center gap-2 py-1.5 cursor-pointer;
+  }
+}
+
+/* 커스텀 애니메이션 */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00c853;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Popover 스타일 */
+.popover-content {
+  background: #0f1520;
+  border: 1px solid #1a73e8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  max-width: 280px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #cdd6e0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  z-index: 50;
+}
