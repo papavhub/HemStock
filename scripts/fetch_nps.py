@@ -168,99 +168,58 @@ def extract_ratio(text: str):
     return None  # 날짜 오탐 방지: catch-all 패턴 제거
 
 
-def get_dart_doc_parts(rcept_no: str) -> list[dict]:
-    """DART 내부 API로 문서 파트 목록(dtd/offset/length 등) 조회"""
-    # DART가 뷰어 JS에서 호출하는 내부 엔드포인트들 시도
-    endpoints = [
-        ("GET",  f"https://dart.fss.or.kr/dsaf001/selectSoliConct.do?rcpNo={rcept_no}"),
-        ("POST", "https://dart.fss.or.kr/dsaf001/selectRprtFrmList.do",   {"rcpNo": rcept_no}),
-        ("POST", "https://dart.fss.or.kr/dsaf001/selectToListTemp.do",    {"rcpNo": rcept_no}),
-        ("GET",  f"https://dart.fss.or.kr/dsaf001/selectRprtFrmData.do?rcpNo={rcept_no}"),
-    ]
-    for method, url, *payload in endpoints:
-        try:
-            if method == "POST":
-                r = SESSION.post(url, data=payload[0] if payload else {}, timeout=8)
-            else:
-                r = SESSION.get(url, timeout=8)
-            if r.status_code == 200 and r.text.strip():
-                return [{"url": url, "content": r.text[:300]}]
-        except Exception:
-            pass
-    return []
+def parse_viewer_params(html: str) -> dict | None:
+    """dsaf001/main.do HTML의 JS에서 '보유비율' 섹션 viewer 파라미터 추출"""
+    # JS 구조 예:
+    # node2['text'] = "3. 보유주식등의 수 및 보유비율";
+    # node2['dcmNo'] = "11436159"; node2['eleId'] = "9";
+    # node2['offset'] = "31475"; node2['length'] = "4937"; node2['dtd'] = "dart4.xsd";
+    m = re.search(
+        r"node\w+\['text'\]\s*=\s*\"[^\"]*보유비율[^\"]*\";"
+        r".*?node\w+\['dcmNo'\]\s*=\s*\"(\d+)\";"
+        r".*?node\w+\['eleId'\]\s*=\s*\"(\d+)\";"
+        r".*?node\w+\['offset'\]\s*=\s*\"(\d+)\";"
+        r".*?node\w+\['length'\]\s*=\s*\"(\d+)\";"
+        r".*?node\w+\['dtd'\]\s*=\s*\"([^\"]+)\"",
+        html, re.DOTALL
+    )
+    if not m:
+        return None
+    return {
+        "dcmNo":  m.group(1),
+        "eleId":  m.group(2),
+        "offset": m.group(3),
+        "length": m.group(4),
+        "dtd":    m.group(5),
+    }
 
 
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
-    """DART 공시 문서에서 보유비율 추출 (여러 경로 시도)"""
+    """DART 공시에서 보유비율 추출:
+    dsaf001/main.do → JS 파라미터 파싱 → report/viewer.do 실제 섹션 HTML → 비율 추출
+    """
     try:
-        # 경로 1: DART 내부 API로 실제 문서 URL 탐색
-        if corp_name == "KB금융":
-            parts = get_dart_doc_parts(rcept_no)
-            print(f"  [DEBUG KB금융] doc parts 시도 결과:")
-            for p in parts:
-                print(f"    url={p['url']}")
-                print(f"    content={repr(p['content'])}")
-
-        # 경로 2: DART 공시 원문 다운로드 URL 패턴들
-        candidate_urls = [
-            # opendart API (다른 파라미터명 시도)
-            f"https://opendart.fss.or.kr/api/document.json?crtfc_key={KEY}&rcpNo={rcept_no}",
-            # dart.fss.or.kr 직접 뷰어 (메인 페이지)
-            f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}",
-        ]
-
-        for url in candidate_urls:
-            try:
-                r = SESSION.get(url, timeout=12)
-                if r.status_code == 200 and len(r.text) > 200:
-                    ratio = extract_ratio(r.text)
-                    if ratio:
-                        return ratio
-                    # 디버그: KB금융에서 내용 앞부분 출력
-                    if corp_name == "KB금융":
-                        txt = r.text
-                        print(f"  [DEBUG KB금융] {url[:60]} → {len(txt)}bytes")
-                        # "보유비율" 위치 찾기
-                        idx = txt.find("보유비율")
-                        if idx == -1:
-                            idx = txt.find("보유 비율")
-                        if idx >= 0:
-                            print(f"    '보유비율' 발견 위치 {idx}, 주변 300자:")
-                            print(f"    {repr(txt[max(0,idx-50):idx+250])}")
-                        else:
-                            print(f"    '보유비율' 텍스트 없음. 앞 800자:")
-                            print(f"    {repr(txt[:800])}")
-            except Exception as e:
-                if corp_name == "KB금융":
-                    print(f"  [DEBUG KB금융] {url[:60]} → 오류: {e}")
-
-        # 경로 3: DART 메인페이지 frameset → 실제 frame src 재구성
+        # 1) 메인 페이지 (JS에 viewer 파라미터 포함)
         main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
-        res      = SESSION.get(main_url, timeout=12)
-        soup     = BeautifulSoup(res.text, "html.parser")
+        res      = SESSION.get(main_url, timeout=15)
 
-        # JavaScript 내 URL 패턴 추출 (동적 로딩 우회)
-        # 예: viewer.do?rcpNo=...&dtd=dart3.xsd&eleId=1&offset=0&length=12345
-        js_match = re.search(
-            r"viewer\.do\?[^'\"]*rcpNo[^'\"]*dtd[^'\"]*length=([0-9]+)[^'\"]*",
-            res.text
+        params = parse_viewer_params(res.text)
+        if not params:
+            return None
+
+        # 2) 실제 '보유비율' 섹션 HTML 요청
+        viewer_url = (
+            f"https://dart.fss.or.kr/report/viewer.do"
+            f"?rcpNo={rcept_no}"
+            f"&dcmNo={params['dcmNo']}"
+            f"&eleId={params['eleId']}"
+            f"&offset={params['offset']}"
+            f"&length={params['length']}"
+            f"&dtd={params['dtd']}"
         )
-        if js_match:
-            # JS에서 URL 전체 추출
-            full_url_match = re.search(
-                r"['\"]([^'\"]*viewer\.do[^'\"]*rcpNo[^'\"]*length=[0-9]+[^'\"]*)['\"]",
-                res.text
-            )
-            if full_url_match:
-                doc_url = full_url_match.group(1)
-                if not doc_url.startswith("http"):
-                    doc_url = "https://dart.fss.or.kr" + doc_url
-                r2 = SESSION.get(doc_url, timeout=12)
-                ratio = extract_ratio(r2.text)
-                if ratio:
-                    return ratio
-
-        return None
+        res2  = SESSION.get(viewer_url, timeout=15)
+        ratio = extract_ratio(res2.text)
+        return ratio
 
     except Exception as e:
         print(f"    [WARN] 파싱 실패 {corp_name} ({rcept_no}): {e}")
