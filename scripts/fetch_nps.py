@@ -126,10 +126,16 @@ def enrich_corp_codes(base: dict) -> dict:
 # ── Step 2: 종목별 국민연금 I001 공시 목록 조회 ───────────────────
 def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
     """list.json — 특정 종목의 주식대량보유상황보고 중 국민연금 공시"""
+    now    = datetime.now(KST)
+    end_de = now.strftime("%Y%m%d")
+    bgn_de = (now - timedelta(days=88)).strftime("%Y%m%d")
+
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
         "crtfc_key":  KEY,
         "corp_code":  corp_code,
+        "bgn_de":     bgn_de,   # corp_code 있어도 날짜 지정 (일부 API 버전 필요)
+        "end_de":     end_de,
         "page_no":    "1",
         "page_count": "100",   # 유형 필터 없이 최대 조회 후 client-side 필터
     }
