@@ -53,11 +53,7 @@ jobs:
       - name: 시장 핵심지표 수집 (VIX·금리·DXY)
         run: python scripts/fetch_market_data.py
 
-      # ③ 신용거래 잔고 비율 (KRX / KOFIA)
-      - name: 신용잔고 비율 수집
-        run: python scripts/fetch_credit.py
-
-      # ④ 신고가·신저가 비율 (yfinance KOSPI 80종목)
+      # ③ 신고가·신저가 비율 (yfinance KOSPI 80종목)
       - name: 신고가 비율 수집 (KOSPI 주요주)
         run: python scripts/fetch_breadth.py
 
@@ -79,7 +75,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/
-          git commit -m "💡 자동 업데이트: NPS·VIX·금리·DXY·신용잔고·신고가비율"
+          git commit -m "💡 자동 업데이트: NPS·VIX·금리·DXY·신고가비율"
           git push
 
   # ─────────────────────────────────────────────────

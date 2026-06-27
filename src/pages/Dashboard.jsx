@@ -39,8 +39,6 @@ const HELP = {
     '대중과 반대로 행동하세요. VIX가 30 이상 \'극도의 공포\' 구간에 진입할 때는 좋은 주식을 분할 매수할 기회이며, 20 미만 \'안정\' 구간에서는 현금 비중을 점진적으로 확보하는 기준이 됩니다.',
   nps:
     '국민연금은 국내 주식 시장의 최대 기관 투자자(약 100조+)입니다. 매일 새벽 GitHub Actions가 데이터를 갱신하며, 기관이 장기적으로 모아가는 우량주 수급의 뼈대를 확인하는 용도입니다.',
-  credit:
-    '개인의 \'빚투\' 열기를 보여줍니다. 비율이 전고점을 뚫고 폭발할 때는 단기 꼭지(과열) 확률이 높습니다. 반대로 반대매매로 신용잔고가 급감하면 단기 바닥 신호일 수 있습니다.',
   fed:
     '미 국채 10Y 금리와 달러 인덱스(DXY). 두 지표가 동시에 오르면 위험자산에서 돈이 빠져나가는 신호입니다. 하향 안정화될 때 적극적 매매를 고려하세요.',
   breadth:
@@ -60,7 +58,6 @@ const DEFAULT_CHECKLIST = [
   { id: 'c1', text: '공포탐욕지수 확인 (25 이하 = 매수 기회)',       checked: false },
   { id: 'c2', text: 'VIX 수준 확인 (30 이상 = 공포 구간)',           checked: false },
   { id: 'c3', text: '국민연금 포트 방향과 내 보유 종목 비교',         checked: false },
-  { id: 'c4', text: '신용잔고 전고점 대비 위치 확인',                 checked: false },
   { id: 'c5', text: '미 국채 금리 + 달러인덱스 방향 확인',           checked: false },
   { id: 'c6', text: '원달러 환율 급등 여부 (외인 이탈 신호)',         checked: false },
   { id: 'c7', text: '비트코인 방향 확인 (위험자산 선호도)',           checked: false },
@@ -167,25 +164,6 @@ function useMarketData() {
     try {
       const base = import.meta.env.BASE_URL || '/'
       const res  = await fetch(`${base}data/market.json?t=${Date.now()}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setData(await res.json())
-    } catch (e) { setError(e.message) }
-    finally { setLoading(false) }
-  }, [])
-  useEffect(() => { fetch_() }, [fetch_])
-  return { data, loading, error, refetch: fetch_ }
-}
-
-/** public/data/credit.json — 신용잔고 */
-function useCreditData() {
-  const [data, setData]       = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
-  const fetch_ = useCallback(async () => {
-    setLoading(true); setError(null)
-    try {
-      const base = import.meta.env.BASE_URL || '/'
-      const res  = await fetch(`${base}data/credit.json?t=${Date.now()}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setData(await res.json())
     } catch (e) { setError(e.message) }
@@ -899,103 +877,8 @@ function FedWidget() {
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ⑦: 신용잔고 비율 (GitHub Actions — KRX/KOFIA)
 // ═══════════════════════════════════════════════════
-function CreditWidget() {
-  const C = useC()
-  const { data, loading, error, refetch } = useCreditData()
-
-  const latest = data?.latest ?? null
-  const prev   = data?.prev   ?? null
-  const peak   = data?.peak   ?? null
-  const change = data?.change ?? 0
-  const series = data?.series ?? []
-  const up     = change > 0
-
-  // 전고점 대비 위치
-  const toPeak = peak && latest ? ((latest / peak) * 100).toFixed(0) : null
-
-  return (
-    <Widget title="신용잔고 비율" badge={up ? '▲ 상승' : '▼ 하락'} badgeColor={up ? C.orange : C.green}
-      helpKey="credit" source={data?.source?.includes('fallback') ? 'KRX/KOFIA · fallback' : 'KRX 정보데이터시스템'}
-      sourceUrl="https://data.krx.co.kr" className="col-span-2">
-      <InfoBox>
-        증권사에서 빌린 돈으로 주식을 산 금액의 시장 비율.
-        <span style={{ color: C.red }}> 전고점 돌파 시 과열 신호</span>,
-        급감 시 반대매매 바닥 신호. 매일 새벽 GitHub Actions가 KRX에서 자동 갱신합니다.
-        {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
-      </InfoBox>
-
-      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
-        <>
-          <div className="flex items-start gap-4 mb-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>신용잔고 비율</p>
-              <div className="flex items-end gap-2">
-                <p className="text-2xl font-semibold" style={{ color: up ? C.orange : C.green }}>
-                  {latest?.toFixed(2) ?? '—'}%
-                </p>
-                <p className="text-xs mb-1" style={{ color: up ? C.red : C.green }}>
-                  {up ? '▲' : '▼'} {Math.abs(change).toFixed(2)}%
-                </p>
-              </div>
-            </div>
-            {peak && (
-              <div className="ml-auto text-right">
-                <p className="text-[10px]" style={{ color: C.muted }}>전고점</p>
-                <p className="text-lg font-semibold" style={{ color: C.red }}>{peak.toFixed(2)}%</p>
-                <p className="text-[10px]" style={{ color: toPeak >= 90 ? C.red : C.muted }}>
-                  현재 {toPeak}% 수준
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 전고점 대비 게이지 */}
-          {peak && latest && (
-            <div className="mb-3">
-              <div className="flex justify-between text-[9px] mb-0.5" style={{ color: C.muted }}>
-                <span>0%</span>
-                <span style={{ color: C.red }}>전고점 {peak.toFixed(2)}%</span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: C.border }}>
-                <div className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${Math.min((latest / peak) * 100, 100)}%`,
-                    background: toPeak >= 90 ? C.red : toPeak >= 70 ? C.orange : C.green,
-                  }} />
-              </div>
-            </div>
-          )}
-
-          <div className="h-24">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={series} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="creditGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={C.orange} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip content={<ChartTooltip unit="%" />} />
-                {peak && <ReferenceLine y={peak} stroke={C.red} strokeDasharray="4 4"
-                  label={{ value: '전고점', fill: C.red, fontSize: 9 }} />}
-                <Area type="monotone" dataKey="ratio" name="신용잔고" stroke={C.orange}
-                  fill="url(#creditGrad)" strokeWidth={1.5} dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </>
-      )}
-    </Widget>
-  )
-}
-
-// ═══════════════════════════════════════════════════
-// 위젯 ⑧: 시장 건강 상태 (GitHub Actions — yfinance KOSPI 80종목)
+// 위젯 ⑦: 시장 건강 상태 (GitHub Actions — yfinance KOSPI 80종목)
 // ═══════════════════════════════════════════════════
 function BreadthWidget() {
   const C = useC()
@@ -1369,16 +1252,11 @@ export default function Dashboard() {
 
               {/* ── 섹션 3: 한국 시장 (GitHub Actions) ── */}
               <SectionHeader flag="🇰🇷" title="한국 시장"
-                sub="매일 04:00 KST 자동갱신 · DART OpenAPI · KRX · yfinance" />
+                sub="매일 04:00 KST 자동갱신 · DART OpenAPI · yfinance" />
 
               {/* NPS: 데스크톱 2칸 × 2행, 모바일 전체 */}
               <div className="col-span-1 sm:col-span-2 lg:row-span-2">
                 <NpsWidget className="h-full" />
-              </div>
-
-              {/* 신용잔고: 데스크톱 2칸 */}
-              <div className="col-span-1 sm:col-span-2">
-                <CreditWidget />
               </div>
 
               {/* 신고가: 데스크톱 2칸 */}
@@ -1392,7 +1270,7 @@ export default function Dashboard() {
                 <span className="leading-relaxed">
                   HemStock v0.5 ·
                   <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕·USD/KRW·BTC ·
-                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: VIX·금리·DXY·NPS·신용잔고·신고가
+                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: VIX·금리·DXY·NPS·신고가
                 </span>
                 <span className="shrink-0">투자 참고용 · 투자 권유 아님</span>
               </div>
