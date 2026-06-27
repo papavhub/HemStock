@@ -45,7 +45,7 @@ def get_nps_filing_list() -> list[dict]:
     """DART list.json — 최근 1년 국민연금 대량보유 보고 목록"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
-    bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")
+    bgn_de = (now - timedelta(days=88)).strftime("%Y%m%d")  # corp_code 없이 최대 3개월
 
     url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
@@ -77,7 +77,7 @@ def get_nps_filing_list() -> list[dict]:
 
 
 # ── Step 2: corp_code별 보유 비율 조회 ──────────────────────────
-def get_hold_ratio(corp_code: str, corp_name: str) -> dict | None:
+def get_hold_ratio(corp_code: str, corp_name: str):
     """DART majorstock.json — 특정 종목 국민연금 최신 보유 비율"""
     url    = "https://opendart.fss.or.kr/api/majorstock.json"
     params = {"crtfc_key": KEY, "corp_code": corp_code}
