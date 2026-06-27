@@ -1,10 +1,11 @@
 """
-국민연금 포트폴리오 수집 — 금감원 DART OpenAPI
+국민연금 포트폴리오 수집 — 금감원 DART OpenAPI + 공시 뷰어
 전략:
-  1) corpCode.xml 다운로드 → 대상 종목 corp_code 정확 매핑 (exact match only)
-  2) 각 종목 list.json (pblntf_detail_ty=I001: 주식대량보유상황보고) → 국민연금 공시 발견
-  3) 최신 공시 document.json → XML 파싱 → 보유비율 추출
-  4) 전부 실패 시 fallback
+  1) corpCode.xml → 대상 종목 corp_code 매핑 (exact match)
+  2) list.json (D001: 주식대량보유상황보고) → 국민연금 공시 발견
+  3) dart.fss.or.kr 뷰어 HTML 스크래핑 → 보유비율 추출
+     (document.json API는 D001 타입에서 101 오류 발생하여 우회)
+  4) 실패 시 빈 목록 반환 (fallback 목 데이터 사용 안 함)
 
 환경변수: DART_API_KEY (GitHub Secret)
 결과: public/data/nps.json
@@ -21,17 +22,23 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import requests
+from bs4 import BeautifulSoup
 
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "public" / "data" / "nps.json"
 KST  = timezone(timedelta(hours=9))
 KEY  = os.environ.get("DART_API_KEY", "").strip()
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HemStock/1.0; +https://github.com/papavhub/HemStock)"}
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Referer": "https://dart.fss.or.kr/",
+}
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-# DART corpCode.xml 에서 확인된 정확한 이름 → corp_code 매핑
-# 이전 실행 로그에서 추출 + 추가 검증
 DART_CORPS = {
     "삼성전자":           "00126380",
     "삼성SDI":            "00126362",
@@ -57,44 +64,17 @@ DART_CORPS = {
     "NAVER":              "00266961",
     "HD한국조선해양":     "00164830",
     "HD현대중공업":       "01390344",
-    # corpCode.xml 에서 exact name 조회 필요 (아래 EXTRA_NAMES에 추가)
 }
 
-# corpCode.xml에서 exact 조회할 추가 종목 (DART 등록명 후보)
 EXTRA_NAMES = [
-    "SK하이닉스",
-    "LG에너지솔루션",
-    "LG화학",
-    "LG전자",
-    "LG",              # 지주사 LG(주)
-    "카카오",
-    "KT",
-    "SK텔레콤",
-    "SK이노베이션",
-    "셀트리온",
-    "카카오뱅크",
-    "삼성생명보험",    # 삼성생명 대체 후보
-    "KB금융지주",      # KB금융 대체 후보
-    "SK",              # SK(주)
-]
-
-FALLBACK = [
-    {"rank":1,  "name":"삼성전자",        "value":8.26,"change": 0.10,"amount":"지분율 8.26% (공시기준)","rcept_dt":"2025-03-10"},
-    {"rank":2,  "name":"기아",             "value":9.12,"change":-0.20,"amount":"지분율 9.12% (공시기준)","rcept_dt":"2025-03-01"},
-    {"rank":3,  "name":"POSCO홀딩스",      "value":9.67,"change": 0.15,"amount":"지분율 9.67% (공시기준)","rcept_dt":"2025-02-15"},
-    {"rank":4,  "name":"KB금융",           "value":9.23,"change": 0.10,"amount":"지분율 9.23% (공시기준)","rcept_dt":"2025-02-28"},
-    {"rank":5,  "name":"현대차",           "value":8.41,"change": 0.00,"amount":"지분율 8.41% (공시기준)","rcept_dt":"2025-03-05"},
-    {"rank":6,  "name":"하나금융지주",     "value":8.91,"change": 0.05,"amount":"지분율 8.91% (공시기준)","rcept_dt":"2025-02-22"},
-    {"rank":7,  "name":"신한지주",         "value":8.44,"change": 0.00,"amount":"지분율 8.44% (공시기준)","rcept_dt":"2025-03-08"},
-    {"rank":8,  "name":"SK하이닉스",       "value":6.94,"change": 0.30,"amount":"지분율 6.94% (공시기준)","rcept_dt":"2025-02-20"},
-    {"rank":9,  "name":"LG에너지솔루션",   "value":6.12,"change":-0.10,"amount":"지분율 6.12% (공시기준)","rcept_dt":"2025-01-30"},
-    {"rank":10, "name":"삼성바이오로직스", "value":5.80,"change": 0.05,"amount":"지분율 5.80% (공시기준)","rcept_dt":"2025-02-10"},
+    "SK하이닉스", "LG에너지솔루션", "LG화학", "LG전자", "LG",
+    "카카오", "KT", "SK텔레콤", "SK이노베이션", "셀트리온",
+    "카카오뱅크", "SK",
 ]
 
 
-# ── Step 1: corpCode.xml에서 추가 종목 exact 조회 ─────────────────
+# ── Step 1: corpCode.xml에서 추가 종목 매핑 ─────────────────────
 def enrich_corp_codes(base: dict) -> dict:
-    """corpCode.xml 다운로드 후 EXTRA_NAMES를 exact match로 추가"""
     print("  corpCode.xml 다운로드 중...")
     url = "https://opendart.fss.or.kr/api/corpCode.xml"
     res = SESSION.get(url, params={"crtfc_key": KEY}, timeout=60)
@@ -105,17 +85,12 @@ def enrich_corp_codes(base: dict) -> dict:
         with z.open(fname) as f:
             tree = ET.parse(f)
 
-    result = dict(base)  # 하드코딩된 것 먼저
-    root   = tree.getroot()
-
-    # exact match only
-    for item in root.findall("list"):
+    result = dict(base)
+    for item in tree.getroot().findall("list"):
         code       = (item.findtext("corp_code") or "").strip()
         name       = (item.findtext("corp_name") or "").strip()
         stock_code = (item.findtext("stock_code") or "").strip()
-        if not code or not name or not stock_code:
-            continue
-        if name in EXTRA_NAMES and name not in result:
+        if code and name and stock_code and name in EXTRA_NAMES and name not in result:
             result[name] = code
             print(f"    추가 매핑: {name} → {code}")
 
@@ -123,59 +98,45 @@ def enrich_corp_codes(base: dict) -> dict:
     return result
 
 
-# ── Step 2: 종목별 국민연금 I001 공시 목록 조회 ───────────────────
-def get_nps_filings(corp_code: str, corp_name: str) -> list[dict]:
-    """list.json — 특정 종목의 주식대량보유상황보고 중 국민연금 공시"""
+# ── Step 2: 종목별 국민연금 D001 공시 목록 ───────────────────────
+def get_nps_filings(corp_code: str) -> list[dict]:
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
-    bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")  # corp_code 있으면 1년 가능
+    bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")
 
-    url    = "https://opendart.fss.or.kr/api/list.json"
     params = {
         "crtfc_key":        KEY,
         "corp_code":        corp_code,
-        "pblntf_detail_ty": "D001",  # 주식등의대량보유상황보고서만
+        "pblntf_detail_ty": "D001",
         "bgn_de":           bgn_de,
         "end_de":           end_de,
         "page_no":          "1",
         "page_count":       "20",
     }
-    res  = SESSION.get(url, params=params, timeout=10)
+    res  = SESSION.get("https://opendart.fss.or.kr/api/list.json", params=params, timeout=10)
     data = res.json()
-    status = data.get("status")
-
-    if status not in ("000", "013"):
-        print(f"  [WARN] list.json {corp_name}: status={status} {data.get('message')}")
-
+    if data.get("status") not in ("000", "013"):
+        return []
     items = data.get("list", [])
-
-    # 디버그: 삼성전자는 모든 공시 유형 출력 (어떤 pblntf_detail_ty가 대량보유인지 확인)
-    if corp_code == "00126380":
-        print(f"  [DEBUG 삼성전자] 전체 공시 {len(items)}건 (total={data.get('total_count',0)}):")
-        for it in items[:15]:
-            print(f"    flr_nm={repr(it.get('flr_nm',''))[:20]}  ty={it.get('pblntf_detail_ty','')}  report_nm={it.get('report_nm','')[:35]}")
-
-    # 국민연금 + 대량보유 관련 공시만 필터
-    nps = [i for i in items if "국민연금" in i.get("flr_nm", "")
-           or "국민연금" in i.get("report_nm", "")]
+    nps   = [i for i in items if "국민연금" in i.get("flr_nm", "")]
     return sorted(nps, key=lambda x: x.get("rcept_dt", ""), reverse=True)
 
 
-# ── Step 3: 공시 원본 XML 파싱 → 보유비율 추출 ──────────────────────
-def extract_ratio_from_text(text: str) -> float | None:
-    """텍스트에서 보유비율 추출 (공통 로직)"""
-    # 패턴 1: XML 태그 형태
-    for tag in ("holdRto", "bndtRto", "posesnStockRto", "hold_rto"):
+# ── Step 3: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
+def extract_ratio(text: str):
+    """HTML/XML 텍스트에서 보유비율(5~25%) 추출"""
+    # 패턴 1: XML 태그
+    for tag in ("holdRto", "bndtRto", "posesnStockRto"):
         m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
         if m:
             v = float(m.group(1))
             if 5.0 <= v <= 25.0:
                 return v
-    # 패턴 2: 텍스트 형태 "보유비율", "지분율"
+    # 패턴 2: 보유비율 텍스트 근처
     for pat in [
-        r"보유\s*비율[^0-9<]{0,30}([0-9]+\.[0-9]{1,4})",
-        r"지분율[^0-9<]{0,15}([0-9]+\.[0-9]{1,4})",
-        r"([0-9]+\.[0-9]{2})\s*(?:%|％)",  # 숫자% 패턴
+        r"보유\s*비율[^0-9<]{0,40}([0-9]+\.[0-9]{1,4})",
+        r"지분율[^0-9<]{0,20}([0-9]+\.[0-9]{1,4})",
+        r"([0-9]+\.[0-9]{2})\s*(?:%|％|</)",
     ]:
         for m in re.finditer(pat, text):
             v = float(m.group(1))
@@ -184,60 +145,62 @@ def extract_ratio_from_text(text: str) -> float | None:
     return None
 
 
-def parse_ratio_from_doc(rcept_no: str, corp_name: str):
-    """document.json → (ZIP 또는 직접 파일) → 보유비율(%) 추출"""
-    url = "https://opendart.fss.or.kr/api/document.json"
+def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
+    """DART 공시 뷰어 (dart.fss.or.kr) HTML 스크래핑으로 보유비율 추출"""
     try:
-        res = SESSION.get(url, params={"crtfc_key": KEY, "rcept_no": rcept_no}, timeout=20)
-        res.raise_for_status()
-        content = res.content
+        # 1) 메인 뷰어 페이지 (frameset)
+        main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
+        res      = SESSION.get(main_url, timeout=15)
+        soup     = BeautifulSoup(res.text, "html.parser")
 
-        texts = []
-        # ZIP 시도
-        try:
-            with zipfile.ZipFile(io.BytesIO(content)) as z:
-                for fname in z.namelist():
-                    if fname.lower().endswith((".xml", ".html", ".htm")):
-                        with z.open(fname) as f:
-                            texts.append(f.read().decode("utf-8", errors="ignore"))
-        except zipfile.BadZipFile:
-            # ZIP이 아니면 직접 파싱 (HTML/XML 직접 반환)
-            texts.append(content.decode("utf-8", errors="ignore"))
+        # 2) 보고서 frame URL 추출
+        report_src = None
+        for tag in soup.find_all(["frame", "iframe"]):
+            src = tag.get("src", "")
+            if src and ("report" in src or "viewer" in src or "dsaf002" in src):
+                report_src = ("https://dart.fss.or.kr" + src) if src.startswith("/") else src
+                break
 
-        for text in texts:
-            # 디버그: KB금융 첫 번째 문서 내용 앞부분 출력
-            if corp_name in ("KB금융", "POSCO홀딩스") and len(text) > 0:
-                print(f"    [DEBUG {corp_name}] 문서 앞 600자:")
-                print(f"    {repr(text[:600])}")
-            ratio = extract_ratio_from_text(text)
-            if ratio is not None:
-                return ratio
+        # 3) frame을 못 찾으면 직접 뷰어 URL 시도
+        if not report_src:
+            report_src = (
+                f"https://dart.fss.or.kr/report/viewer.do"
+                f"?rcpNo={rcept_no}&dtd=&eleId=0&offset=0&length=0&dtdDir="
+            )
+
+        res2  = SESSION.get(report_src, timeout=15)
+        ratio = extract_ratio(res2.text)
+        if ratio:
+            return ratio
+
+        # 4) 메인 페이지 자체에서도 시도 (일부 공시는 인라인)
+        ratio = extract_ratio(res.text)
+        return ratio
 
     except Exception as e:
-        print(f"    [WARN] 문서 파싱 실패 {corp_name} ({rcept_no}): {e}")
-    return None
+        print(f"    [WARN] 뷰어 파싱 실패 {corp_name} ({rcept_no}): {e}")
+        return None
 
 
 # ── 메인 ─────────────────────────────────────────────────────────
 def fetch_all() -> list[dict]:
     if not KEY:
-        print("  [ERROR] DART_API_KEY 환경변수가 비어 있습니다.")
+        print("  [ERROR] DART_API_KEY 환경변수 없음")
         return []
-    print(f"  API 키 확인: {'*' * 8}{KEY[-4:]} (마지막 4자리)")
+    print(f"  API 키: {'*'*8}{KEY[-4:]}")
 
     try:
         corp_map = enrich_corp_codes(DART_CORPS)
     except Exception as e:
-        print(f"  [ERROR] corpCode.xml 실패: {e}")
-        print("  하드코딩된 corp_code만 사용합니다.")
+        print(f"  [WARN] corpCode.xml 실패: {e} → 하드코딩 사용")
         corp_map = dict(DART_CORPS)
 
     stocks = []
-    print(f"\n  국민연금 대량보유 공시 조회 ({len(corp_map)}종목)...")
+    print(f"\n  국민연금 D001 공시 조회 + 뷰어 파싱 ({len(corp_map)}종목)...")
 
     for corp_name, corp_code in corp_map.items():
         try:
-            filings = get_nps_filings(corp_code, corp_name)
+            filings = get_nps_filings(corp_code)
             if not filings:
                 continue
 
@@ -245,15 +208,16 @@ def fetch_all() -> list[dict]:
             rcept_no = latest.get("rcept_no", "")
             rcept_dt = latest.get("rcept_dt", "")
 
-            ratio = parse_ratio_from_doc(rcept_no, corp_name) if rcept_no else None
+            ratio = parse_ratio_from_viewer(rcept_no, corp_name) if rcept_no else None
             if ratio is None:
-                print(f"  - {corp_name:<22} 공시 있으나 비율 파싱 실패")
+                print(f"  - {corp_name:<22} 공시 있으나 비율 파싱 실패 ({rcept_no})")
                 continue
 
             prev_ratio = ratio
             if len(filings) >= 2:
-                prev_ratio = parse_ratio_from_doc(filings[1].get("rcept_no", ""), corp_name) or ratio
-
+                prev_ratio = (
+                    parse_ratio_from_viewer(filings[1]["rcept_no"], corp_name) or ratio
+                )
             change = round(ratio - prev_ratio, 2)
             if len(rcept_dt) == 8:
                 rcept_dt = f"{rcept_dt[:4]}-{rcept_dt[4:6]}-{rcept_dt[6:]}"
@@ -269,8 +233,7 @@ def fetch_all() -> list[dict]:
 
         except Exception as e:
             print(f"  [ERROR] {corp_name}: {e}")
-
-        time.sleep(0.2)
+        time.sleep(0.3)
 
     stocks.sort(key=lambda x: x["value"], reverse=True)
     for i, s in enumerate(stocks, 1):
@@ -285,26 +248,24 @@ def main():
 
     now_kst    = datetime.now(KST)
     updated_at = now_kst.strftime("%Y-%m-%d %H:%M KST")
-
-    stocks = fetch_all()
+    stocks     = fetch_all()
 
     if stocks:
-        source = "금감원 DART OpenAPI — 주식대량보유상황보고(I001) 원본 파싱 (국민연금 최신 공시)"
+        source = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
     else:
-        print("\n  ⚠ DART 수집 실패 → fallback 데이터 사용")
-        stocks     = FALLBACK
-        source     = "fallback — 과거 공시 기준 하드코딩"
-        updated_at += " [fallback]"
+        print("\n  ⚠ 수집 실패 — 빈 목록으로 저장 (fallback 없음)")
+        source     = "수집 실패 — DART 공시 데이터 없음"
+        updated_at += " [error]"
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump({
             "updated_at": updated_at,
             "source":     source,
-            "stocks":     stocks,
+            "stocks":     stocks,   # 실패 시 빈 배열
         }, f, ensure_ascii=False, indent=2)
 
-    print(f"\n{'=' * 55}")
+    print(f"\n{'='*55}")
     print(f"  ✅ 완료: {len(stocks)}종목 | {updated_at}")
     print(f"  출처: {source}")
     print("=" * 55)

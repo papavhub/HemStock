@@ -746,7 +746,21 @@ function NpsWidget() {
           <RefreshCw size={10} className={loading ? 'animate-spin' : ''} /> 새로고침
         </button>
       </div>
-      {loading ? <Spinner /> : (
+      {loading ? <Spinner /> : stocks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 gap-2">
+          <AlertTriangle size={28} style={{ color: C.orange }} />
+          <p className="text-sm font-medium" style={{ color: C.orange }}>데이터를 가져올 수 없습니다</p>
+          <p className="text-[11px] text-center" style={{ color: C.muted }}>
+            DART 공시 수집에 실패했습니다.<br />
+            매일 04:00 KST 자동 갱신 시 재시도합니다.
+          </p>
+          <button onClick={refetch}
+            className="mt-1 flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors"
+            style={{ color: C.accent, borderColor: C.accent + '60' }}>
+            <RefreshCw size={11} /> 다시 시도
+          </button>
+        </div>
+      ) : (
         <div className="flex gap-4">
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
