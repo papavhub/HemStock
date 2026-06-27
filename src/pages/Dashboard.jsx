@@ -1263,10 +1263,26 @@ function TopBar({ isDark, toggleTheme }) {
 }
 
 // ═══════════════════════════════════════════════════
+// 섹션 헤더
+// ═══════════════════════════════════════════════════
+function SectionHeader({ flag, title, sub }) {
+  const C = useC()
+  return (
+    <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex items-center gap-3 pt-2 pb-1">
+      <span className="text-lg leading-none">{flag}</span>
+      <div>
+        <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: C.text }}>{title}</p>
+        <p className="text-[10px]" style={{ color: C.muted }}>{sub}</p>
+      </div>
+      <div className="flex-1 h-px ml-2" style={{ background: C.border }} />
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════
 // 메인 대시보드
 // ═══════════════════════════════════════════════════
 export default function Dashboard() {
-  // 기본값: 라이트 모드
   const [isDark, setIsDark] = useState(() => {
     try { return localStorage.getItem('hemstock_theme') === 'dark' }
     catch { return false }
@@ -1280,43 +1296,89 @@ export default function Dashboard() {
   }
   const C = isDark ? DARK : LIGHT
 
+  // 모바일 사이드바 토글
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <ThemeCtx.Provider value={C}>
       <div className="flex h-screen overflow-hidden"
         style={{ background: C.bg, color: C.text, fontFamily: "'JetBrains Mono', monospace" }}>
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <TopBar isDark={isDark} toggleTheme={toggleTheme} />
-          <main className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-4 gap-4 auto-rows-min">
 
-              {/* ── 실시간 API (키 불필요) ─── */}
-              <FearAndGreedWidget />   {/* col-span-2 */}
+        {/* 사이드바 — 데스크톱: 고정, 모바일: 오버레이 */}
+        {/* 모바일 오버레이 배경 */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-30 lg:hidden"
+            style={{ background: 'rgba(0,0,0,0.5)' }}
+            onClick={() => setSidebarOpen(false)} />
+        )}
+        <div className={`
+          fixed lg:relative z-40 lg:z-auto h-full
+          transition-transform duration-300
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </div>
+
+        {/* 메인 */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <TopBar isDark={isDark} toggleTheme={toggleTheme} onMenuClick={() => setSidebarOpen(v => !v)} />
+
+          <main className="flex-1 overflow-y-auto p-3 lg:p-4">
+            {/* ── 반응형 그리드: 모바일 1열 → 태블릿 2열 → 데스크톱 4열 ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 auto-rows-min">
+
+              {/* ── 섹션 1: 글로벌 심리 지표 (실시간) ── */}
+              <SectionHeader flag="🌐" title="글로벌 심리 지표"
+                sub="실시간 · 브라우저 직접 fetch · API 키 불필요" />
+
+              {/* 공포탐욕: 데스크톱 2칸, 모바일 전체 */}
+              <div className="col-span-1 sm:col-span-2">
+                <FearAndGreedWidget />
+              </div>
               <UsdKrwWidget />
               <BitcoinWidget />
 
-              {/* ── GitHub Actions 갱신 ──────── */}
-              <VixWidget />            {/* col-span-2 */}
-              <CreditWidget />         {/* col-span-2 */}
+              {/* ── 섹션 2: 미국 시장 (GitHub Actions · yfinance) ── */}
+              <SectionHeader flag="🇺🇸" title="미국 시장 / 매크로"
+                sub="매일 04:00 KST 자동갱신 · Yahoo Finance (yfinance)" />
 
-              {/* NPS (2col × 2row) + Fed (2col) */}
-              <div className="col-span-2 row-span-2">
+              {/* VIX: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <VixWidget />
+              </div>
+              {/* Fed: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <FedWidget />
+              </div>
+
+              {/* ── 섹션 3: 한국 시장 (GitHub Actions) ── */}
+              <SectionHeader flag="🇰🇷" title="한국 시장"
+                sub="매일 04:00 KST 자동갱신 · DART OpenAPI · KRX · yfinance" />
+
+              {/* NPS: 데스크톱 2칸 × 2행, 모바일 전체 */}
+              <div className="col-span-1 sm:col-span-2 lg:row-span-2">
                 <NpsWidget className="h-full" />
               </div>
-              <FedWidget />            {/* col-span-2 */}
 
-              {/* 신고가 비율 */}
-              <BreadthWidget />        {/* col-span-2 */}
+              {/* 신용잔고: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <CreditWidget />
+              </div>
+
+              {/* 신고가: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <BreadthWidget />
+              </div>
 
               {/* 푸터 */}
-              <div className="col-span-4 flex items-center justify-between px-1 py-2 text-[10px]"
-                style={{ color: C.muted }}>
-                <span>
-                  HemStock v0.4 ·
-                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕지수·USD/KRW·BTC ·
-                  <span style={{ color: C.accent }}> ⟳ 매일 04:00 KST</span>: VIX·금리·DXY·국민연금·신용잔고·신고가
+              <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 px-1 py-3 text-[10px]"
+                style={{ color: C.muted, borderTop: `1px solid ${C.border}` }}>
+                <span className="leading-relaxed">
+                  HemStock v0.5 ·
+                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕·USD/KRW·BTC ·
+                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: VIX·금리·DXY·NPS·신용잔고·신고가
                 </span>
-                <span>투자 참고용이며 투자 권유가 아닙니다.</span>
+                <span className="shrink-0">투자 참고용 · 투자 권유 아님</span>
               </div>
             </div>
           </main>
