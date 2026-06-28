@@ -4,6 +4,10 @@
 - 미 국채 10Y 금리     : US Treasury 10Y Yield  — Yahoo Finance ^TNX
 - 달러 인덱스 (DXY)    : US Dollar Index        — Yahoo Finance DX-Y.NYB
 - S&P500               : 시장 기준선            — Yahoo Finance ^GSPC
+- NASDAQ               :                        — Yahoo Finance ^IXIC
+- KOSPI                : 코스피                 — Yahoo Finance ^KS11
+- KOSDAQ               : 코스닥                 — Yahoo Finance ^KQ11
+- 금 선물 (GOLD)       : Gold Futures           — Yahoo Finance GC=F
 
 실행: GitHub Actions 매일 04:00 KST 자동 실행 (update-nps.yml)
 결과: public/data/market.json
@@ -11,6 +15,7 @@
 
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -24,7 +29,7 @@ OUTPUT_PATH = Path(__file__).resolve().parent.parent / "public" / "data" / "mark
 KST = timezone(timedelta(hours=9))
 
 
-def fetch_series(symbol: str, period: str = "1mo", label: str = "") -> dict:
+def fetch_series(symbol: str, period: str = "3mo", label: str = "") -> dict:
     """야후 파이낸스에서 종가 시계열 데이터 수집"""
     try:
         ticker = yf.Ticker(symbol)
@@ -32,7 +37,7 @@ def fetch_series(symbol: str, period: str = "1mo", label: str = "") -> dict:
 
         if hist.empty:
             print(f"  [WARN] {symbol}: 데이터 없음", file=sys.stderr)
-            return {"series": [], "latest": None, "prev": None, "change": None}
+            return {"series": [], "latest": None, "prev": None, "change": None, "change_pct": None}
 
         series = [
             {
@@ -40,18 +45,19 @@ def fetch_series(symbol: str, period: str = "1mo", label: str = "") -> dict:
                 "value": round(float(row["Close"]), 2),
             }
             for idx, row in hist.iterrows()
-            if not str(row["Close"]) == "nan"
+            if str(row["Close"]) != "nan"
         ]
 
         if not series:
-            return {"series": [], "latest": None, "prev": None, "change": None}
+            return {"series": [], "latest": None, "prev": None, "change": None, "change_pct": None}
 
         latest = series[-1]["value"]
         prev   = series[-2]["value"] if len(series) >= 2 else latest
         change = round(latest - prev, 3)
         change_pct = round((change / prev) * 100, 2) if prev else 0
 
-        print(f"  ✓ {symbol:<14} 최신: {latest:>10.2f}  전일比: {change:+.3f} ({change_pct:+.2f}%)  ({len(series)}일치)")
+        lbl = label or symbol
+        print(f"  ✓ {lbl:<14} {latest:>12,.2f}  {change_pct:+.2f}%  ({len(series)}일치)")
         return {
             "series":     series,
             "latest":     latest,
@@ -65,6 +71,19 @@ def fetch_series(symbol: str, period: str = "1mo", label: str = "") -> dict:
         return {"series": [], "latest": None, "prev": None, "change": None, "change_pct": None}
 
 
+SYMBOLS = [
+    # (key, symbol, period, label)
+    ("vix",          "^VIX",      "1mo",  "VIX"),
+    ("treasury_10y", "^TNX",      "3mo",  "US10Y"),
+    ("dxy",          "DX-Y.NYB",  "3mo",  "DXY"),
+    ("spx",          "^GSPC",     "3mo",  "S&P500"),
+    ("nasdaq",       "^IXIC",     "3mo",  "NASDAQ"),
+    ("kospi",        "^KS11",     "3mo",  "KOSPI"),
+    ("kosdaq",       "^KQ11",     "3mo",  "KOSDAQ"),
+    ("gold",         "GC=F",      "3mo",  "GOLD"),
+]
+
+
 def main():
     print("=" * 55)
     print("  시장 핵심 지표 수집 시작 (yfinance / Yahoo Finance)")
@@ -73,27 +92,22 @@ def main():
     now_kst    = datetime.now(KST)
     updated_at = now_kst.strftime("%Y-%m-%d %H:%M KST")
 
-    print("\n[VIX] CBOE 공포지수 (최근 1개월)")
-    vix = fetch_series("^VIX", period="1mo", label="VIX")
-
-    print("\n[TNX] 미 국채 10년물 금리 (최근 3개월)")
-    tnx = fetch_series("^TNX", period="3mo", label="US10Y")
-
-    print("\n[DXY] 달러 인덱스 (최근 3개월)")
-    dxy = fetch_series("DX-Y.NYB", period="3mo", label="DXY")
-
-    print("\n[SPX] S&P500 (최근 1개월, 추세 참고용)")
-    spx = fetch_series("^GSPC", period="1mo", label="S&P500")
+    results = {}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(fetch_series, sym, period, label): key
+            for key, sym, period, label in SYMBOLS
+        }
+        for future in as_completed(futures):
+            key = futures[future]
+            results[key] = future.result()
 
     # 저장
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "updated_at": updated_at,
         "source":     "Yahoo Finance (yfinance) — 종가 기준",
-        "vix":        vix,
-        "treasury_10y": tnx,
-        "dxy":        dxy,
-        "spx":        spx,
+        **results,
     }
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:

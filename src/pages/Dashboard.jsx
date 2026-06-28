@@ -49,6 +49,10 @@ const HELP = {
     '원달러 환율은 외국인 투자자의 한국 주식 매수·매도 의향을 간접적으로 보여줍니다. 1,400원 이상이면 외인 이탈 경계 구간입니다. 출처: ExchangeRate-API (무료 공개)',
   btc:
     '비트코인은 위험자산 선호도의 선행 지표입니다. 24시간 -5% 이하 급락은 주식시장 조정의 전조로 해석합니다. 출처: CoinGecko API (무료, 키 불필요)',
+  indices:
+    '주요 4개 지수 3개월 추이. KOSPI·KOSDAQ는 한국장, S&P500·NASDAQ는 미국장의 체력을 보여줍니다. 지수 간 격차(디커플링)가 생기면 수급 쏠림 신호입니다.',
+  gold:
+    '금은 전통적인 안전자산입니다. 금리 하락·달러 약세 구간에서 강세를 보이며, 급등할 때는 시장 불확실성이 높다는 신호입니다. 매일 새벽 yfinance로 자동 갱신합니다.',
 }
 
 // (Mock 데이터 제거 — 전부 JSON 파일에서 읽어옴)
@@ -501,16 +505,20 @@ function UsdKrwWidget() {
           </div>
           {/* 주요 통화 */}
           <div className="border-t pt-2" style={{ borderColor: C.border }}>
-            <p className="text-[9px] mb-1" style={{ color: C.muted }}>주요 통화 (기준: 1 USD)</p>
-            <div className="grid grid-cols-2 gap-1">
+            <p className="text-[9px] mb-1.5" style={{ color: C.muted }}>원화 환산 주요 통화</p>
+            <div className="space-y-1">
               {[
-                { l: 'USD/JPY', v: fmtNum(data.jpy, 2), u: '엔' },
-                { l: 'USD/CNY', v: fmtNum(data.cny, 4), u: '위안' },
-                { l: 'USD/EUR', v: fmtNum(data.eur, 4), u: '유로' },
+                { label: '100엔 (JPY)',  krw: data.jpy  ? (data.krw / data.jpy * 100) : null,  warn: data.jpy && (data.krw / data.jpy * 100) < 850 },
+                { label: '1유로 (EUR)',  krw: data.eur  ? (data.krw / data.eur)        : null,  warn: false },
+                { label: '1위안 (CNY)',  krw: data.cny  ? (data.krw / data.cny)        : null,  warn: false },
               ].map(c => (
-                <div key={c.l} className="flex justify-between">
-                  <span className="text-[10px]" style={{ color: C.muted }}>{c.l}</span>
-                  <span className="text-[10px] font-semibold" style={{ color: C.text }}>{c.v} {c.u}</span>
+                <div key={c.label} className="flex justify-between items-center">
+                  <span className="text-[10px]" style={{ color: C.muted }}>{c.label}</span>
+                  <span className="text-[11px] font-semibold tabular-nums"
+                    style={{ color: c.warn ? C.orange : C.text }}>
+                    ₩ {c.krw ? fmtNum(c.krw, 1) : '—'}
+                    {c.warn && <span className="ml-1 text-[9px]" style={{ color: C.orange }}>엔저</span>}
+                  </span>
                 </div>
               ))}
             </div>
@@ -877,6 +885,143 @@ function FedWidget() {
 }
 
 // ═══════════════════════════════════════════════════
+// 위젯: 주요 지수 (GitHub Actions — yfinance)
+// ═══════════════════════════════════════════════════
+function IndexMini({ label, flag, data: d, color }) {
+  const C  = useC()
+  const up = (d?.change_pct ?? 0) >= 0
+  const c  = up ? C.green : C.red
+  const series = (d?.series ?? []).slice(-30)
+
+  return (
+    <div className="rounded p-2.5" style={{ background: C.header, border: `1px solid ${C.border}` }}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-semibold" style={{ color: C.muted }}>{flag} {label}</span>
+        <span className="text-[9px] font-semibold px-1 rounded"
+          style={{ color: c, background: c + '18' }}>
+          {up ? '▲' : '▼'} {Math.abs(d?.change_pct ?? 0).toFixed(2)}%
+        </span>
+      </div>
+      <p className="text-base font-bold tabular-nums mb-1.5" style={{ color: C.text }}>
+        {d?.latest != null ? fmtNum(d.latest, 2) : '—'}
+      </p>
+      <div className="h-14">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={series} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`idx-grad-${label}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={c} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={c} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="date" hide />
+            <YAxis domain={['auto', 'auto']} hide />
+            <Tooltip
+              content={({ active, payload }) => active && payload?.[0] ? (
+                <div className="rounded px-2 py-1 text-[10px]"
+                  style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.text }}>
+                  {payload[0].payload.date}: {fmtNum(payload[0].value, 2)}
+                </div>
+              ) : null}
+            />
+            <Area type="monotone" dataKey="value" stroke={c} strokeWidth={1.5}
+              fill={`url(#idx-grad-${label})`} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
+function IndicesWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useMarketData()
+
+  const indices = [
+    { key: 'kospi',  label: 'KOSPI',   flag: '🇰🇷' },
+    { key: 'kosdaq', label: 'KOSDAQ',  flag: '🇰🇷' },
+    { key: 'spx',    label: 'S&P 500', flag: '🇺🇸' },
+    { key: 'nasdaq', label: 'NASDAQ',  flag: '🇺🇸' },
+  ]
+
+  return (
+    <Widget title="주요 지수" helpKey="indices"
+      source="Yahoo Finance (yfinance)" sourceUrl="https://finance.yahoo.com"
+      className="col-span-4">
+      <InfoBox>
+        KOSPI·KOSDAQ·S&P500·NASDAQ 3개월 추이.
+        <span style={{ color: C.muted }}> 매일 04:00 KST 자동갱신.</span>
+        {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
+      </InfoBox>
+      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          {indices.map(idx => (
+            <IndexMini key={idx.key} label={idx.label} flag={idx.flag} data={data?.[idx.key]} />
+          ))}
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
+// 위젯: 금 (GitHub Actions — yfinance)
+// ═══════════════════════════════════════════════════
+function GoldWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useMarketData()
+  const gold   = data?.gold
+  const latest = gold?.latest
+  const prev   = gold?.prev
+  const pct    = gold?.change_pct ?? 0
+  const up     = pct >= 0
+  const c      = up ? C.green : C.red
+
+  return (
+    <Widget title="금 선물 (Gold)" badge={up ? '▲ 상승' : '▼ 하락'} badgeColor={c}
+      helpKey="gold" source="Yahoo Finance (GC=F)" sourceUrl="https://finance.yahoo.com/quote/GC=F/">
+      <InfoBox>
+        안전자산 선호도 지표. 금리 하락·달러 약세 구간에서 강세.
+        <span style={{ color: C.red }}> 급등 = 시장 불확실성 신호.</span>
+        {data?.updated_at && <span style={{ color: C.muted }}> · {data.updated_at}</span>}
+      </InfoBox>
+      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
+        <>
+          <div className="flex items-end gap-2 mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>USD / troy oz</p>
+              <p className="text-2xl font-bold tabular-nums" style={{ color: c }}>
+                ${latest != null ? fmtNum(latest, 0) : '—'}
+              </p>
+            </div>
+            <p className="text-xs mb-1 font-semibold" style={{ color: c }}>
+              {up ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
+            </p>
+          </div>
+          <div className="h-20">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={(gold?.series ?? []).slice(-60)} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={C.yellow} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={C.yellow} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                <Tooltip content={<ChartTooltip unit=" USD" />} />
+                <Area type="monotone" dataKey="value" name="금 선물" stroke={C.yellow}
+                  fill="url(#goldGrad)" strokeWidth={1.5} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
+    </Widget>
+  )
+}
+
 // ═══════════════════════════════════════════════════
 // 위젯 ⑦: 시장 건강 상태 (GitHub Actions — yfinance KOSPI 80종목)
 // ═══════════════════════════════════════════════════
@@ -1236,8 +1381,18 @@ export default function Dashboard() {
               </div>
               <UsdKrwWidget />
               <BitcoinWidget />
+              <GoldWidget />
 
-              {/* ── 섹션 2: 미국 시장 (GitHub Actions · yfinance) ── */}
+              {/* ── 섹션 2: 주요 지수 (GitHub Actions) ── */}
+              <SectionHeader flag="📈" title="주요 지수"
+                sub="매일 04:00 KST 자동갱신 · Yahoo Finance (yfinance)" />
+
+              {/* 지수 4개: 전체 너비 */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-4">
+                <IndicesWidget />
+              </div>
+
+              {/* ── 섹션 3: 미국 시장 (GitHub Actions · yfinance) ── */}
               <SectionHeader flag="🇺🇸" title="미국 시장 / 매크로"
                 sub="매일 04:00 KST 자동갱신 · Yahoo Finance (yfinance)" />
 
@@ -1250,7 +1405,7 @@ export default function Dashboard() {
                 <FedWidget />
               </div>
 
-              {/* ── 섹션 3: 한국 시장 (GitHub Actions) ── */}
+              {/* ── 섹션 4: 한국 시장 (GitHub Actions) ── */}
               <SectionHeader flag="🇰🇷" title="한국 시장"
                 sub="매일 04:00 KST 자동갱신 · DART OpenAPI · yfinance" />
 
@@ -1268,9 +1423,9 @@ export default function Dashboard() {
               <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 px-1 py-3 text-[10px]"
                 style={{ color: C.muted, borderTop: `1px solid ${C.border}` }}>
                 <span className="leading-relaxed">
-                  HemStock v0.5 ·
-                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕·USD/KRW·BTC ·
-                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: VIX·금리·DXY·NPS·신고가
+                  HemStock v0.6 ·
+                  <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕·환율·BTC ·
+                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: 지수·금·VIX·금리·DXY·NPS·신고가
                 </span>
                 <span className="shrink-0">투자 참고용 · 투자 권유 아님</span>
               </div>
