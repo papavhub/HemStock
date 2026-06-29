@@ -910,7 +910,7 @@ function NpsWidget() {
 
   return (
     <Widget title="국민연금 포트폴리오" badge="NPS · GitHub Actions" badgeColor={C.accent}
-      helpKey="nps" source="공시 기반 자동수집" sourceUrl="https://dart.fss.or.kr/dsab007/main.do?option=P2"
+      helpKey="nps" source="금감원 DART OpenAPI (D001)" sourceUrl="https://opendart.fss.or.kr"
       className="col-span-2 row-span-2">
       <InfoBox>
         국민연금은 국내 최대 기관 투자자(약 100조+). 매일 새벽 4시 GitHub Actions가 자동 갱신.
@@ -1048,8 +1048,8 @@ function FedWidget() {
   return (
     <Widget title="금리 · 매크로"
       badge={danger ? '⚠ 위험자산 주의' : '안정'} badgeColor={danger ? C.red : C.green}
-      helpKey="fed" source="Yahoo Finance (^TNX · ^IRX)"
-      sourceUrl="https://finance.yahoo.com/quote/%5ETNX/" className="col-span-2">
+      helpKey="fed" source="Yahoo Finance · 한국은행 ECOS"
+      sourceUrl="https://ecos.bok.or.kr" className="col-span-2">
       <InfoBox>
         미·한국 금리와 달러 인덱스(DXY).
         <span style={{ color: C.red }}> 미국 금리·달러 동반 상승</span> = 주식에서 채권·달러로 돈 이동.
