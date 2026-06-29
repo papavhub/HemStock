@@ -43,8 +43,10 @@ const HELP = {
     '한·미 국채 금리와 달러 인덱스(DXY). 미국 10Y 금리·달러가 동시에 오르면 위험자산에서 돈이 빠져나가는 신호입니다. 한미 금리차(KR-US)가 마이너스면 외인 자본 이탈 압력이 높아집니다.',
   breadth:
     '지수가 오르는데 신고가 종목이 줄면 소수 대형주만 오르는 \'착시 현상\'으로 하락의 전조입니다. 반대로 지수가 지지부진해도 신고가 종목이 늘면 장의 체력이 좋아지는 신호입니다.',
+  cnnfng:
+    'CNN Fear & Greed Index — 주식 전용 심리 온도계. VIX·풋콜비율·주가 모멘텀·정크본드 스프레드 등 7가지 지표를 종합합니다. 25 이하 극도의 공포는 주식 매수 기회, 75 이상 극도의 탐욕은 차익실현 신호입니다. 출처: CNN Markets',
   fng:
-    '암호화폐·주식 시장 심리 온도계 (0–100). 25 이하 극도의 공포는 위험자산 매수 기회이고, 75 이상 극도의 탐욕은 차익실현을 고민할 시점입니다. 출처: alternative.me',
+    '비트코인 기반 암호화폐 심리 온도계 (0–100). 25 이하 극도의 공포는 코인 매수 기회이고, 75 이상 극도의 탐욕은 매도 신호입니다. 주식 시장과 높은 상관관계를 보입니다. 출처: alternative.me',
   usdkrw:
     '원달러 환율은 외국인 투자자의 한국 주식 매수·매도 의향을 간접적으로 보여줍니다. 1,400원 이상이면 외인 이탈 경계 구간입니다. 출처: ExchangeRate-API (무료 공개)',
   btc:
@@ -93,7 +95,42 @@ function getFngStatus(C, val) {
 // 실시간 데이터 훅
 // ═══════════════════════════════════════════════════
 
-/** alternative.me — 공포탐욕지수 */
+/** CNN Markets — 주식 공포탐욕지수 */
+function useCnnFng() {
+  const [data, setData]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const fetch_ = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const res  = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+        headers: { 'Referer': 'https://www.cnn.com/markets/fear-and-greed' }
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      const fg   = json.fear_and_greed
+      const hist = (json.fear_and_greed_historical?.data ?? []).slice(-8).map(d => ({
+        date:   new Date(d.x).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }),
+        value:  Math.round(d.y),
+        rating: d.rating,
+      }))
+      setData({
+        score:    Math.round(fg.score),
+        rating:   fg.rating,
+        prev1w:   Math.round(fg.previous_1_week),
+        prev1m:   Math.round(fg.previous_1_month),
+        prev1y:   Math.round(fg.previous_1_year),
+        hist,
+        timestamp: fg.timestamp,
+      })
+    } catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { fetch_() }, [fetch_])
+  return { data, loading, error, refetch: fetch_ }
+}
+
+/** alternative.me — 코인 공포탐욕지수 */
 function useFearAndGreed() {
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
@@ -344,7 +381,122 @@ function InfoBox({ children }) {
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ①: 공포탐욕지수 (실시간 — alternative.me)
+// 위젯 ①-A: 주식 공포탐욕지수 (실시간 — CNN Markets)
+// ═══════════════════════════════════════════════════
+function CnnFngWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useCnnFng()
+  const val    = data?.score ?? null
+  const status = val !== null ? getFngStatus(C, val) : null
+  const gc     = status?.color ?? C.muted
+
+  const RATING_KO = {
+    'extreme fear': '극도의 공포',
+    'fear':         '공포',
+    'neutral':      '중립',
+    'greed':        '탐욕',
+    'extreme greed':'극도의 탐욕',
+  }
+
+  return (
+    <Widget title="주식 공포탐욕지수 (실시간)" badge={status?.label} badgeColor={status?.color}
+      helpKey="cnnfng" source="CNN Fear & Greed Index" sourceUrl="https://www.cnn.com/markets/fear-and-greed"
+      isLive className="col-span-2">
+      <InfoBox>
+        <span style={{ color: C.accent }}>주식 시장 전용</span> 심리 온도계.
+        VIX·풋콜비율·주가 모멘텀·정크본드 스프레드 등 7가지 지표 종합.{' '}
+        <span style={{ color: C.red }}>25 이하 = 주식 매수 기회</span>,{' '}
+        <span style={{ color: C.green }}>75 이상 = 차익실현 신호</span>.
+      </InfoBox>
+      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
+        <div className="flex gap-5">
+          {/* 좌측 수치 */}
+          <div className="w-36 shrink-0 space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>현재 지수</p>
+              <p className="text-4xl font-bold" style={{ color: gc }}>{val}</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: gc }}>{status?.label}</p>
+              <span className="inline-block text-[10px] mt-1 px-2 py-0.5 rounded"
+                style={{ background: gc + '18', color: gc, border: `1px solid ${gc}30` }}>
+                → {status?.action}
+              </span>
+            </div>
+            {/* 아크 게이지 */}
+            <svg width="120" height="72" viewBox="0 0 120 72">
+              <defs>
+                <linearGradient id="cnnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stopColor={C.red} />
+                  <stop offset="30%"  stopColor={C.orange} />
+                  <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} />
+                  <stop offset="70%"  stopColor="#65a30d" />
+                  <stop offset="100%" stopColor={C.green} />
+                </linearGradient>
+              </defs>
+              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke={C.border} strokeWidth="8" strokeLinecap="round" />
+              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#cnnGrad)"
+                strokeWidth="8" strokeLinecap="round"
+                strokeDasharray={`${(val / 100) * 157} 157`} />
+              <text x="60" y="60" textAnchor="middle" fontSize="12" fontFamily="monospace"
+                fontWeight="bold" fill={gc}>{val}</text>
+            </svg>
+            {/* 과거 비교 */}
+            <div className="space-y-1 text-[10px]">
+              {[
+                { label: '1주 전', v: data.prev1w },
+                { label: '1달 전', v: data.prev1m },
+                { label: '1년 전', v: data.prev1y },
+              ].map(r => {
+                const rs = getFngStatus(C, r.v)
+                return (
+                  <div key={r.label} className="flex items-center justify-between">
+                    <span style={{ color: C.muted }}>{r.label}</span>
+                    <span className="font-semibold" style={{ color: rs.color }}>{r.v} {rs.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          {/* 우측 차트 */}
+          <div className="flex-1">
+            <p className="text-[10px] mb-1" style={{ color: C.muted }}>최근 8일 추이</p>
+            <div className="h-[185px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.hist} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="cnnAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor={gc} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={gc} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                  <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                  <Tooltip content={({ active, payload, label }) =>
+                    active && payload?.length
+                      ? <div className="rounded border px-2 py-1 text-xs shadow"
+                          style={{ background: C.header, borderColor: C.border }}>
+                          <p style={{ color: C.muted }}>{label}</p>
+                          <p style={{ color: gc }}><b>{payload[0].value}</b> — {RATING_KO[payload[0].payload.rating] ?? payload[0].payload.rating}</p>
+                        </div>
+                      : null
+                  } />
+                  <ReferenceLine y={25} stroke={C.red}   strokeDasharray="3 3" label={{ value: '공포선', fill: C.red,   fontSize: 9 }} />
+                  <ReferenceLine y={75} stroke={C.green} strokeDasharray="3 3" label={{ value: '탐욕선', fill: C.green, fontSize: 9 }} />
+                  <Area type="monotone" dataKey="value" name="지수" stroke={gc}
+                    fill="url(#cnnAreaGrad)" strokeWidth={1.5}
+                    dot={{ r: 3, fill: gc }} activeDot={{ r: 4 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
+// 위젯 ①-B: 코인 공포탐욕지수 (실시간 — alternative.me)
 // ═══════════════════════════════════════════════════
 function FearAndGreedWidget() {
   const C = useC()
@@ -360,14 +512,14 @@ function FearAndGreedWidget() {
   const gc = status?.color ?? C.muted
 
   return (
-    <Widget title="공포탐욕지수 (실시간)" badge={status?.label} badgeColor={status?.color}
+    <Widget title="코인 공포탐욕지수 (실시간)" badge={status?.label} badgeColor={status?.color}
       helpKey="fng" source="alternative.me/fng" sourceUrl="https://alternative.me/crypto/fear-and-greed-index/"
       isLive className="col-span-2">
       <InfoBox>
-        암호화폐·주식 시장 심리 온도계. 0에 가까울수록{' '}
-        <span style={{ color: C.red }}>공포(매수 기회)</span>, 100에 가까울수록{' '}
+        <span style={{ color: C.orange }}>비트코인 기반</span> 암호화폐 심리 온도계. 0에 가까울수록{' '}
+        <span style={{ color: C.red }}>공포(코인 매수 기회)</span>, 100에 가까울수록{' '}
         <span style={{ color: C.green }}>탐욕(매도 신호)</span>.
-        주식·코인 시장 심리는 높은 상관관계를 보입니다.
+        주식 시장과 높은 상관관계를 보입니다.
       </InfoBox>
       {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
         <div className="flex gap-5">
@@ -1463,7 +1615,11 @@ export default function Dashboard() {
               <SectionHeader flag="🌐" title="글로벌 심리 지표"
                 sub="실시간 · 브라우저 직접 fetch · API 키 불필요" />
 
-              {/* 공포탐욕: 데스크톱 2칸, 모바일 전체 */}
+              {/* 주식 공포탐욕: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <CnnFngWidget />
+              </div>
+              {/* 코인 공포탐욕: 데스크톱 2칸 */}
               <div className="col-span-1 sm:col-span-2">
                 <FearAndGreedWidget />
               </div>
