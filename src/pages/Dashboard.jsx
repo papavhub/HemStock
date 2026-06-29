@@ -1252,17 +1252,22 @@ function Sidebar() {
 function TopBar({ isDark, toggleTheme }) {
   const C = useC()
   const { data: fxData } = useUsdKrw()
+  const { data: mkt } = useMarket()
   const [time, setTime] = useState(new Date())
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
+  const fmt = (v, decimals = 2) =>
+    v != null ? v.toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : '로딩...'
+  const sign = (v) => v != null ? (v >= 0 ? `+${v.toFixed(2)}%` : `${v.toFixed(2)}%`) : ''
+
   const indices = [
-    { name: 'KOSPI',   value: '2,748.32', change: '+0.82%', up: true  },
-    { name: 'KOSDAQ',  value: '  856.71', change: '-0.14%', up: false },
-    { name: 'S&P500',  value: '5,521.14', change: '+0.31%', up: true  },
-    { name: 'NASDAQ',  value: '17,834.23',change: '+0.56%', up: true  },
+    { name: 'KOSPI',   value: fmt(mkt?.kospi?.latest,  2), change: sign(mkt?.kospi?.change_pct),  up: (mkt?.kospi?.change_pct  ?? 0) >= 0 },
+    { name: 'KOSDAQ',  value: fmt(mkt?.kosdaq?.latest, 2), change: sign(mkt?.kosdaq?.change_pct), up: (mkt?.kosdaq?.change_pct ?? 0) >= 0 },
+    { name: 'S&P500',  value: fmt(mkt?.spx?.latest,    2), change: sign(mkt?.spx?.change_pct),    up: (mkt?.spx?.change_pct    ?? 0) >= 0 },
+    { name: 'NASDAQ',  value: fmt(mkt?.nasdaq?.latest,  2), change: sign(mkt?.nasdaq?.change_pct), up: (mkt?.nasdaq?.change_pct ?? 0) >= 0 },
     {
       name: 'USD/KRW',
       value: fxData?.krw ? `${fxData.krw.toFixed(1)}` : '로딩...',
