@@ -114,6 +114,20 @@ function useCnnFng() {
         value:  Math.round(d.y),
         rating: d.rating,
       }))
+      // 7개 구성 지표 파싱
+      const compDefs = [
+        { key: 'market_momentum_sp500', label: 'S&P500 모멘텀',    icon: '📈' },
+        { key: 'stock_price_strength',  label: '주가 강도',         icon: '💪' },
+        { key: 'stock_price_breadth',   label: '주가 폭',           icon: '🌊' },
+        { key: 'put_call_options',      label: '풋/콜 비율',        icon: '⚖️' },
+        { key: 'market_volatility_vix', label: 'VIX 변동성',        icon: '😰' },
+        { key: 'junk_bond_demand',      label: '정크본드 수요',     icon: '🏚️' },
+        { key: 'safe_haven_demand',     label: '안전자산 수요',     icon: '🛡️' },
+      ]
+      const components = compDefs.map(({ key, label, icon }) => {
+        const c = json[key] ?? {}
+        return { label, icon, score: c.score != null ? Math.round(c.score) : null, rating: c.rating ?? null }
+      })
       setData({
         score:    Math.round(fg.score),
         rating:   fg.rating,
@@ -121,6 +135,7 @@ function useCnnFng() {
         prev1m:   Math.round(fg.previous_1_month),
         prev1y:   Math.round(fg.previous_1_year),
         hist,
+        components,
         timestamp: fg.timestamp,
       })
     } catch (e) { setError(e.message) }
@@ -456,38 +471,67 @@ function CnnFngWidget() {
               })}
             </div>
           </div>
-          {/* 우측 차트 */}
-          <div className="flex-1">
-            <p className="text-[10px] mb-1" style={{ color: C.muted }}>최근 8일 추이</p>
-            <div className="h-[185px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.hist} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="cnnAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={gc} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={gc} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                  <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                  <YAxis domain={[0, 100]} tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                  <Tooltip content={({ active, payload, label }) =>
-                    active && payload?.length
-                      ? <div className="rounded border px-2 py-1 text-xs shadow"
-                          style={{ background: C.header, borderColor: C.border }}>
-                          <p style={{ color: C.muted }}>{label}</p>
-                          <p style={{ color: gc }}><b>{payload[0].value}</b> — {RATING_KO[payload[0].payload.rating] ?? payload[0].payload.rating}</p>
-                        </div>
-                      : null
-                  } />
-                  <ReferenceLine y={25} stroke={C.red}   strokeDasharray="3 3" label={{ value: '공포선', fill: C.red,   fontSize: 9 }} />
-                  <ReferenceLine y={75} stroke={C.green} strokeDasharray="3 3" label={{ value: '탐욕선', fill: C.green, fontSize: 9 }} />
-                  <Area type="monotone" dataKey="value" name="지수" stroke={gc}
-                    fill="url(#cnnAreaGrad)" strokeWidth={1.5}
-                    dot={{ r: 3, fill: gc }} activeDot={{ r: 4 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+          {/* 우측: 차트 + 7개 구성 지표 */}
+          <div className="flex-1 flex flex-col gap-3">
+            <div>
+              <p className="text-[10px] mb-1" style={{ color: C.muted }}>최근 8일 추이</p>
+              <div className="h-[110px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.hist} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="cnnAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={gc} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={gc} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                    <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <Tooltip content={({ active, payload, label }) =>
+                      active && payload?.length
+                        ? <div className="rounded border px-2 py-1 text-xs shadow"
+                            style={{ background: C.header, borderColor: C.border }}>
+                            <p style={{ color: C.muted }}>{label}</p>
+                            <p style={{ color: gc }}><b>{payload[0].value}</b> — {RATING_KO[payload[0].payload.rating] ?? payload[0].payload.rating}</p>
+                          </div>
+                        : null
+                    } />
+                    <ReferenceLine y={25} stroke={C.red}   strokeDasharray="3 3" label={{ value: '공포선', fill: C.red,   fontSize: 9 }} />
+                    <ReferenceLine y={75} stroke={C.green} strokeDasharray="3 3" label={{ value: '탐욕선', fill: C.green, fontSize: 9 }} />
+                    <Area type="monotone" dataKey="value" name="지수" stroke={gc}
+                      fill="url(#cnnAreaGrad)" strokeWidth={1.5}
+                      dot={{ r: 3, fill: gc }} activeDot={{ r: 4 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+            {/* 7개 구성 지표 */}
+            {data.components?.length > 0 && (
+              <div>
+                <p className="text-[10px] mb-1.5" style={{ color: C.muted }}>7개 구성 지표</p>
+                <div className="grid grid-cols-1 gap-0.5">
+                  {data.components.map(comp => {
+                    const cs = comp.score != null ? getFngStatus(C, comp.score) : null
+                    const barW = comp.score != null ? comp.score : 0
+                    return (
+                      <div key={comp.label} className="flex items-center gap-2">
+                        <span className="text-[10px] w-28 shrink-0" style={{ color: C.muted }}>
+                          {comp.icon} {comp.label}
+                        </span>
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: C.border }}>
+                          <div className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${barW}%`, background: cs?.color ?? C.muted }} />
+                        </div>
+                        <span className="text-[10px] w-6 text-right tabular-nums shrink-0"
+                          style={{ color: cs?.color ?? C.muted }}>
+                          {comp.score ?? '—'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1640,12 +1684,8 @@ export default function Dashboard() {
               <SectionHeader flag="🇺🇸" title="미국 시장 / 매크로"
                 sub="매일 04:00 KST 자동갱신 · Yahoo Finance (yfinance)" />
 
-              {/* VIX: 데스크톱 2칸 */}
-              <div className="col-span-1 sm:col-span-2">
-                <VixWidget />
-              </div>
-              {/* Fed: 데스크톱 2칸 */}
-              <div className="col-span-1 sm:col-span-2">
+              {/* 금리·매크로: 전체 너비 */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                 <FedWidget />
               </div>
 
