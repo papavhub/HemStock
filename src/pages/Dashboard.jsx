@@ -321,7 +321,7 @@ function SourceBadge({ label, url }) {
   )
 }
 
-function Widget({ title, badge, badgeColor, helpKey, source, sourceUrl, children, className = '', isLive = false }) {
+function Widget({ title, badge, badgeColor, helpKey, source, sourceUrl, source2, sourceUrl2, children, className = '', isLive = false }) {
   const C = useC()
   return (
     <div className={`flex flex-col rounded-lg overflow-hidden border ${className}`}
@@ -338,7 +338,8 @@ function Widget({ title, badge, badgeColor, helpKey, source, sourceUrl, children
               {badge}
             </span>
           )}
-          {source && <SourceBadge label={source} url={sourceUrl} />}
+          {source  && <SourceBadge label={source}  url={sourceUrl}  />}
+          {source2 && <SourceBadge label={source2} url={sourceUrl2} />}
         </div>
         <div className="flex items-center gap-2">
           {isLive && <div className="live-dot" />}
@@ -1050,8 +1051,8 @@ function FedWidget() {
   return (
     <Widget title="금리 · 매크로"
       badge={danger ? '⚠ 위험자산 주의' : '안정'} badgeColor={danger ? C.red : C.green}
-      helpKey="fed" source="Yahoo Finance · 한국은행 ECOS"
-      sourceUrl="https://ecos.bok.or.kr" className="col-span-2">
+      helpKey="fed" source="Yahoo Finance (yfinance)" sourceUrl="https://finance.yahoo.com"
+      source2="한국은행 ECOS" sourceUrl2="https://ecos.bok.or.kr" className="col-span-2">
       <InfoBox>
         미·한국 금리와 달러 인덱스(DXY).
         <span style={{ color: C.red }}> 미국 금리·달러 동반 상승</span> = 주식에서 채권·달러로 돈 이동.
@@ -1440,8 +1441,8 @@ function KrFngWidget() {
 
   return (
     <Widget title="한국장 공포탐욕지수 (복합 산출)" badge={status?.label} badgeColor={status?.color}
-      helpKey="krfng" source="Yahoo Finance · 한국은행 ECOS · KOSPI 80종목"
-      sourceUrl="https://finance.yahoo.com" className="col-span-2">
+      helpKey="krfng" source="Yahoo Finance (yfinance)" sourceUrl="https://finance.yahoo.com"
+      source2="한국은행 ECOS" sourceUrl2="https://ecos.bok.or.kr" className="col-span-2">
       <InfoBox>
         <span style={{ color: C.accent }}>한국 주식시장 전용</span> 복합 심리 지수 (자체 산출 · 참고용).
         KOSPI 이격도·KOSDAQ 상대강도·신고가비율·VIX 역수·수익률 곡선 5가지를 가중합산.{' '}
