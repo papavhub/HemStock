@@ -814,96 +814,6 @@ function BitcoinWidget() {
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ④: VIX 공포지수 (GitHub Actions — yfinance)
-// ═══════════════════════════════════════════════════
-function VixWidget() {
-  const C = useC()
-  const { data, loading, error, refetch } = useMarketData()
-  const vix    = data?.vix
-  const series = vix?.series ?? []
-  const latest = vix?.latest
-  const prev   = vix?.prev
-  const up     = latest > prev
-  const status = latest !== null && latest !== undefined ? getVixStatus(C, latest) : null
-  const pct    = latest ? Math.min((latest / 80) * 100, 100) : 0
-
-  return (
-    <Widget title="공포지수 (VIX)" badge={status?.label} badgeColor={status?.color}
-      source="Yahoo Finance (^VIX)" sourceUrl="https://finance.yahoo.com/quote/%5EVIX/"
-      helpKey="vix" className="col-span-2">
-      <InfoBox>
-        S&P500 옵션 가격으로 산출하는 시장 변동성 지수.
-        <span style={{ color: C.red }}> 30 이상 = 공포</span>,
-        <span style={{ color: C.green }}> 20 미만 = 안정</span>.
-        매일 새벽 GitHub Actions (yfinance)가 자동 갱신합니다.
-        {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
-      </InfoBox>
-      {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
-        <div className="flex gap-6">
-          <div className="w-32 shrink-0 space-y-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>현재 VIX</p>
-              <p className="text-2xl font-semibold" style={{ color: status?.color ?? C.text }}>
-                {latest?.toFixed(1) ?? '—'}
-              </p>
-              {prev && (
-                <p className="text-xs mt-0.5" style={{ color: up ? C.red : C.green }}>
-                  {up ? '▲' : '▼'} {Math.abs(vix.change ?? 0).toFixed(2)} 전일比
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>공포 게이지</p>
-              <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: C.border }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${pct}%`, background: `linear-gradient(90deg,${C.green},${C.orange},${C.red})` }} />
-              </div>
-              <div className="flex justify-between text-[9px] mt-0.5" style={{ color: C.muted }}>
-                <span>0</span><span>20</span><span>40</span><span>80</span>
-              </div>
-            </div>
-            <div className="space-y-1 text-[10px]">
-              {[
-                { label: '<15 극도탐욕', color: C.red },
-                { label: '15–20 안정',  color: C.green },
-                { label: '20–30 주의',  color: C.orange },
-                { label: '>30 공포',    color: C.red },
-              ].map(z => (
-                <div key={z.label} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm shrink-0 inline-block" style={{ background: z.color }} />
-                  <span style={{ color: C.muted }}>{z.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="vixGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={status?.color ?? C.accent} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={status?.color ?? C.accent} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip content={<ChartTooltip />} />
-                <ReferenceLine y={30} stroke={C.red}   strokeDasharray="4 4" label={{ value: '공포선 30', fill: C.red,   fontSize: 9, position: 'insideTopLeft' }} />
-                <ReferenceLine y={20} stroke={C.green} strokeDasharray="4 4" label={{ value: '안정선 20', fill: C.green, fontSize: 9, position: 'insideTopLeft' }} />
-                <Area type="monotone" dataKey="value" name="VIX"
-                  stroke={status?.color ?? C.accent} fill="url(#vixGrad)"
-                  strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-    </Widget>
-  )
-}
-
-// ═══════════════════════════════════════════════════
 // 위젯 ⑤: 국민연금 포트폴리오 (GitHub Actions — NPS)
 // ═══════════════════════════════════════════════════
 function NpsWidget() {
@@ -1309,8 +1219,9 @@ function BreadthWidget() {
 
   return (
     <Widget title="시장 건강 상태 (신고가 비율)" badge={healthy ? '건강' : '약화'} badgeColor={healthy ? C.green : C.orange}
-      helpKey="breadth" source="Yahoo Finance · KOSPI 주요주 80종목"
-      sourceUrl="https://finance.yahoo.com" className="col-span-2">
+      helpKey="breadth" source="Yahoo Finance (yfinance)" sourceUrl="https://finance.yahoo.com"
+      source2="KOSPI 주요주 80종목" sourceUrl2="https://finance.yahoo.com/quote/%5EKS11/"
+      className="col-span-2">
       <InfoBox>
         KOSPI 주요 80개 종목 중 52주 신고가 경신 종목 수 비율.
         <span style={{ color: C.red }}> 지수↑ + 신고가↓ = 소수 대형주 착시</span> (하락 전조).
