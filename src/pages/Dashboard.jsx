@@ -45,6 +45,8 @@ const HELP = {
     '지수가 오르는데 신고가 종목이 줄면 소수 대형주만 오르는 \'착시 현상\'으로 하락의 전조입니다. 반대로 지수가 지지부진해도 신고가 종목이 늘면 장의 체력이 좋아지는 신호입니다.',
   cnnfng:
     'CNN Fear & Greed Index — 주식 전용 심리 온도계. VIX·풋콜비율·주가 모멘텀·정크본드 스프레드 등 7가지 지표를 종합합니다. 25 이하 극도의 공포는 주식 매수 기회, 75 이상 극도의 탐욕은 차익실현 신호입니다. 출처: CNN Markets',
+  krfng:
+    '한국 주식시장 공포탐욕지수 — KOSPI 모멘텀(MA20 이격도)·KOSDAQ 상대강도·신고가 비율·VIX 역수·수익률 곡선(KR10Y-KR3Y) 5가지를 가중합산한 자체 복합 지수입니다. 공식 지수가 아닌 참고용 지표이며, 25 이하 극도의 공포 = 분할 매수 탐색, 75 이상 극도의 탐욕 = 차익실현 검토. 출처: Yahoo Finance · 한국은행 ECOS · KOSPI 주요 80종목',
   fng:
     '비트코인 기반 암호화폐 심리 온도계 (0–100). 25 이하 극도의 공포는 코인 매수 기회이고, 75 이상 극도의 탐욕은 매도 신호입니다. 주식 시장과 높은 상관관계를 보입니다. 출처: alternative.me',
   usdkrw:
@@ -1377,6 +1379,174 @@ function BreadthWidget() {
 }
 
 // ═══════════════════════════════════════════════════
+// 한국장 공포탐욕지수 (자체 복합 산출)
+// ═══════════════════════════════════════════════════
+function computeKrFng(mkt, breadth) {
+  // 1. KOSPI 모멘텀: MA20 이격도 → 0-100
+  const kospiSeries = mkt?.kospi?.series ?? []
+  let kospiScore = 50
+  if (kospiSeries.length >= 5) {
+    const slice = kospiSeries.slice(-20)
+    const ma    = slice.reduce((s, d) => s + d.value, 0) / slice.length
+    const cur   = kospiSeries[kospiSeries.length - 1]?.value
+    if (ma && cur) {
+      const dev = (cur / ma - 1) * 100   // % 이격
+      kospiScore = Math.max(0, Math.min(100, (dev + 5) / 10 * 100))
+    }
+  }
+
+  // 2. KOSDAQ 상대강도: KOSDAQ 변동률 − KOSPI 변동률 → 0-100
+  const kospiPct  = mkt?.kospi?.change_pct  ?? 0
+  const kosdaqPct = mkt?.kosdaq?.change_pct ?? 0
+  const kosdaqScore = Math.max(0, Math.min(100, (kosdaqPct - kospiPct + 3) / 6 * 100))
+
+  // 3. 신고가 비율: breadth.latest.ratio (이미 0-100)
+  const breadthScore = breadth?.latest?.ratio ?? 50
+
+  // 4. VIX 역수: VIX 10 → 100점, VIX 45 → 0점
+  const vix = mkt?.vix?.latest
+  const vixScore = vix != null ? Math.max(0, Math.min(100, (45 - vix) / 35 * 100)) : 50
+
+  // 5. 수익률 곡선: KR10Y - KR3Y (장단기 스프레드)
+  const kr10y = mkt?.kr_10y?.latest
+  const kr3y  = mkt?.kr_3y?.latest
+  let curveScore = 50
+  if (kr10y != null && kr3y != null) {
+    curveScore = Math.max(0, Math.min(100, (kr10y - kr3y + 0.5) / 2 * 100))
+  }
+
+  const components = [
+    { label: 'KOSPI 모멘텀',    icon: '📈', score: Math.round(kospiScore),   weight: 0.25 },
+    { label: 'KOSDAQ 상대강도', icon: '⚡', score: Math.round(kosdaqScore),  weight: 0.20 },
+    { label: '신고가 비율',      icon: '🏔️', score: Math.round(breadthScore), weight: 0.25 },
+    { label: 'VIX 역수',        icon: '😰', score: Math.round(vixScore),     weight: 0.20 },
+    { label: '수익률 곡선',      icon: '📐', score: Math.round(curveScore),   weight: 0.10 },
+  ]
+  const total = Math.round(components.reduce((s, c) => s + c.score * c.weight, 0))
+  return { score: total, components }
+}
+
+function KrFngWidget() {
+  const C = useC()
+  const { data: mkt,     loading: ml, error: me, refetch: mr } = useMarketData()
+  const { data: breadth, loading: bl, error: be, refetch: br } = useBreadthData()
+
+  const loading = ml || bl
+  const error   = me || be
+  const result  = (!loading && !error && mkt) ? computeKrFng(mkt, breadth) : null
+  const val     = result?.score ?? null
+  const status  = val !== null ? getFngStatus(C, val) : null
+  const gc      = status?.color ?? C.muted
+
+  return (
+    <Widget title="한국장 공포탐욕지수 (복합 산출)" badge={status?.label} badgeColor={status?.color}
+      helpKey="krfng" source="Yahoo Finance · 한국은행 ECOS · KOSPI 80종목"
+      sourceUrl="https://finance.yahoo.com" className="col-span-2">
+      <InfoBox>
+        <span style={{ color: C.accent }}>한국 주식시장 전용</span> 복합 심리 지수 (자체 산출 · 참고용).
+        KOSPI 이격도·KOSDAQ 상대강도·신고가비율·VIX 역수·수익률 곡선 5가지를 가중합산.{' '}
+        <span style={{ color: C.red }}>25 이하 = 분할 매수 탐색</span>,{' '}
+        <span style={{ color: C.green }}>75 이상 = 차익실현 신호</span>.
+      </InfoBox>
+      {loading ? <Spinner /> : error ? (
+        <ApiError msg={error} onRetry={() => { mr(); br() }} />
+      ) : (
+        <div className="flex gap-5">
+          {/* 좌측: 수치 + 게이지 + 범례 */}
+          <div className="w-36 shrink-0 space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>한국장 지수</p>
+              <p className="text-4xl font-bold" style={{ color: gc }}>{val ?? '—'}</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: gc }}>{status?.label}</p>
+              <span className="inline-block text-[10px] mt-1 px-2 py-0.5 rounded"
+                style={{ background: gc + '18', color: gc, border: `1px solid ${gc}30` }}>
+                → {status?.action}
+              </span>
+            </div>
+            {/* 아크 게이지 */}
+            {val !== null && (
+              <svg width="120" height="72" viewBox="0 0 120 72">
+                <defs>
+                  <linearGradient id="krFngGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%"   stopColor={C.red} />
+                    <stop offset="30%"  stopColor={C.orange} />
+                    <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} />
+                    <stop offset="70%"  stopColor="#65a30d" />
+                    <stop offset="100%" stopColor={C.green} />
+                  </linearGradient>
+                </defs>
+                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke={C.border} strokeWidth="8" strokeLinecap="round" />
+                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#krFngGrad)"
+                  strokeWidth="8" strokeLinecap="round"
+                  strokeDasharray={`${(val / 100) * 157} 157`} />
+                <text x="60" y="60" textAnchor="middle" fontSize="12" fontFamily="monospace"
+                  fontWeight="bold" fill={gc}>{val}</text>
+              </svg>
+            )}
+            {/* 구간 범례 */}
+            <div className="space-y-1 text-[9px]">
+              {[
+                { r: '0–25',   l: '극도의 공포', c: C.red },
+                { r: '26–45',  l: '공포',        c: C.orange },
+                { r: '46–55',  l: '중립',        c: C.muted },
+                { r: '56–75',  l: '탐욕',        c: C.orange },
+                { r: '76–100', l: '극도의 탐욕', c: C.green },
+              ].map(z => (
+                <div key={z.r} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: z.c, display: 'inline-block' }} />
+                  <span style={{ color: C.muted }}>{z.r} {z.l}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 우측: 5개 구성 지표 바 + 산식 설명 */}
+          <div className="flex-1 flex flex-col gap-3">
+            <div>
+              <p className="text-[10px] mb-2" style={{ color: C.muted }}>5개 구성 지표</p>
+              <div className="space-y-2">
+                {result?.components?.map(comp => {
+                  const cs = getFngStatus(C, comp.score)
+                  return (
+                    <div key={comp.label}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[10px]" style={{ color: C.muted }}>
+                          {comp.icon} {comp.label}
+                          <span className="ml-1" style={{ color: C.border }}>
+                            ({Math.round(comp.weight * 100)}%)
+                          </span>
+                        </span>
+                        <span className="text-[10px] font-semibold tabular-nums" style={{ color: cs.color }}>
+                          {comp.score}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: C.border }}>
+                        <div className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${comp.score}%`, background: cs.color }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 산식 설명 박스 */}
+            <div className="rounded p-2.5 text-[9px] space-y-1"
+              style={{ background: C.header, border: `1px solid ${C.border}` }}>
+              <p style={{ color: C.muted }}>📊 가중합산 산식</p>
+              <p style={{ color: C.border }}>
+                KOSPI 이격도(25%) + KOSDAQ 상대강도(20%) + 신고가비율(25%) + VIX역수(20%) + 수익률곡선(10%)
+              </p>
+              <p style={{ color: C.border }}>※ 공식 지수 아님 · 매일 04:00 KST 갱신 데이터 기반 · 참고 전용</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
 // 사이드바
 // ═══════════════════════════════════════════════════
 function Sidebar() {
@@ -1701,6 +1871,11 @@ export default function Dashboard() {
               {/* 신고가: 데스크톱 2칸 */}
               <div className="col-span-1 sm:col-span-2">
                 <BreadthWidget />
+              </div>
+
+              {/* 한국장 공포탐욕: 데스크톱 2칸 (NPS 2행 아래 빈 칸에 위치) */}
+              <div className="col-span-1 sm:col-span-2">
+                <KrFngWidget />
               </div>
 
               {/* 푸터 */}
