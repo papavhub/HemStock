@@ -658,71 +658,122 @@ function FearAndGreedWidget() {
 function UsdKrwWidget() {
   const C = useC()
   const { data, loading, error, refetch } = useUsdKrw()
+  const { data: mkt } = useMarketData()
   const isDanger  = data?.krw >= 1400
   const isWarning = !isDanger && data?.krw >= 1350
   const sc = isDanger ? C.red : isWarning ? C.orange : C.green
   const sl = isDanger ? '위험' : isWarning ? '주의' : '안정'
+  const krwSeries = (mkt?.usdkrw?.series ?? []).slice(-30)
 
   return (
     <Widget title="원달러 환율 (실시간)" badge={sl} badgeColor={sc}
       helpKey="usdkrw" source="ExchangeRate-API" sourceUrl="https://open.er-api.com"
-      isLive>
+      source2="Yahoo Finance (추세)" sourceUrl2="https://finance.yahoo.com/quote/KRW%3DX/"
+      isLive className="col-span-2">
       <InfoBox>
         달러 대비 원화 가치. 숫자가 클수록 원화 약세(달러 강세).
         <span style={{ color: C.red }}> 1,400원↑</span>은 외인 이탈 경계 구간입니다.
       </InfoBox>
       {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
-        <div className="space-y-3">
-          <div className="flex items-end gap-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>USD / KRW</p>
-              <p className="text-3xl font-bold" style={{ color: sc }}>₩ {fmtNum(data.krw, 1)}</p>
+        <div className="flex gap-5">
+          {/* 좌측: 현재값 + 구간 해석 + 주요 통화 */}
+          <div className="w-52 shrink-0 space-y-3">
+            <div className="flex items-end gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>USD / KRW</p>
+                <p className="text-3xl font-bold" style={{ color: sc }}>₩ {fmtNum(data.krw, 1)}</p>
+              </div>
+              {isDanger && (
+                <div className="mb-1 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded"
+                  style={{ background: C.red + '18', color: C.red, border: `1px solid ${C.red}30` }}>
+                  <AlertTriangle size={9} /> 1,400원 돌파 — 외인 이탈 주의
+                </div>
+              )}
             </div>
-            {isDanger && (
-              <div className="mb-1 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded"
-                style={{ background: C.red + '18', color: C.red, border: `1px solid ${C.red}30` }}>
-                <AlertTriangle size={9} /> 1,400원 돌파 — 외인 이탈 주의
-              </div>
-            )}
-          </div>
-          {/* 구간 해석 */}
-          <div className="grid grid-cols-2 gap-1 text-[9px]">
-            {[
-              { range: '~1,200',     label: '원화 강세',  sub: '외인 유입',    color: C.green },
-              { range: '1,200~1,350',label: '보통',       sub: '중립',         color: C.muted },
-              { range: '1,350~1,400',label: '원화 약세',  sub: '주의',         color: C.orange },
-              { range: '1,400~',     label: '위험',       sub: '외인 이탈',    color: C.red },
-            ].map(z => (
-              <div key={z.range} className="rounded px-1.5 py-1"
-                style={{ background: z.color + '12', border: `1px solid ${z.color}20` }}>
-                <p className="font-semibold" style={{ color: z.color }}>{z.range}</p>
-                <p style={{ color: z.color }}>{z.label}</p>
-                <p style={{ color: C.muted }}>{z.sub}</p>
-              </div>
-            ))}
-          </div>
-          {/* 주요 통화 */}
-          <div className="border-t pt-2" style={{ borderColor: C.border }}>
-            <p className="text-[9px] mb-1.5" style={{ color: C.muted }}>원화 환산 주요 통화</p>
-            <div className="space-y-1">
+            {/* 구간 해석 */}
+            <div className="grid grid-cols-2 gap-1 text-[9px]">
               {[
-                { label: '100엔 (JPY)',  krw: data.jpy  ? (data.krw / data.jpy * 100) : null,  warn: data.jpy && (data.krw / data.jpy * 100) < 850 },
-                { label: '1유로 (EUR)',  krw: data.eur  ? (data.krw / data.eur)        : null,  warn: false },
-                { label: '1위안 (CNY)',  krw: data.cny  ? (data.krw / data.cny)        : null,  warn: false },
-              ].map(c => (
-                <div key={c.label} className="flex justify-between items-center">
-                  <span className="text-[10px]" style={{ color: C.muted }}>{c.label}</span>
-                  <span className="text-[11px] font-semibold tabular-nums"
-                    style={{ color: c.warn ? C.orange : C.text }}>
-                    ₩ {c.krw ? fmtNum(c.krw, 1) : '—'}
-                    {c.warn && <span className="ml-1 text-[9px]" style={{ color: C.orange }}>엔저</span>}
-                  </span>
+                { range: '~1,200',     label: '원화 강세',  sub: '외인 유입',    color: C.green },
+                { range: '1,200~1,350',label: '보통',       sub: '중립',         color: C.muted },
+                { range: '1,350~1,400',label: '원화 약세',  sub: '주의',         color: C.orange },
+                { range: '1,400~',     label: '위험',       sub: '외인 이탈',    color: C.red },
+              ].map(z => (
+                <div key={z.range} className="rounded px-1.5 py-1"
+                  style={{ background: z.color + '12', border: `1px solid ${z.color}20` }}>
+                  <p className="font-semibold" style={{ color: z.color }}>{z.range}</p>
+                  <p style={{ color: z.color }}>{z.label}</p>
+                  <p style={{ color: C.muted }}>{z.sub}</p>
                 </div>
               ))}
             </div>
-            <p className="text-[9px] mt-2" style={{ color: C.muted }}>
-              기준: {data.updatedAt ? new Date(data.updatedAt).toLocaleString('ko-KR') : '—'}
+            {/* 주요 통화 */}
+            <div className="border-t pt-2" style={{ borderColor: C.border }}>
+              <p className="text-[9px] mb-1.5" style={{ color: C.muted }}>원화 환산 주요 통화</p>
+              <div className="space-y-1">
+                {[
+                  { label: '100엔 (JPY)',  krw: data.jpy  ? (data.krw / data.jpy * 100) : null,  warn: data.jpy && (data.krw / data.jpy * 100) < 850 },
+                  { label: '1유로 (EUR)',  krw: data.eur  ? (data.krw / data.eur)        : null,  warn: false },
+                  { label: '1위안 (CNY)',  krw: data.cny  ? (data.krw / data.cny)        : null,  warn: false },
+                ].map(c => (
+                  <div key={c.label} className="flex justify-between items-center">
+                    <span className="text-[10px]" style={{ color: C.muted }}>{c.label}</span>
+                    <span className="text-[11px] font-semibold tabular-nums"
+                      style={{ color: c.warn ? C.orange : C.text }}>
+                      ₩ {c.krw ? fmtNum(c.krw, 1) : '—'}
+                      {c.warn && <span className="ml-1 text-[9px]" style={{ color: C.orange }}>엔저</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] mt-2" style={{ color: C.muted }}>
+                기준: {data.updatedAt ? new Date(data.updatedAt).toLocaleString('ko-KR') : '—'}
+              </p>
+            </div>
+          </div>
+          {/* 우측: 추세 차트 */}
+          <div className="flex-1">
+            <p className="text-[10px] mb-1" style={{ color: C.muted }}>
+              최근 30일 추이 {krwSeries.length === 0 && <span style={{ color: C.border }}>(04:00 KST 갱신 후 표시)</span>}
             </p>
+            {krwSeries.length > 0 ? (
+              <div className="h-[185px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={krwSeries} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="krwAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={sc} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={sc} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                    <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false}
+                      interval={Math.floor(krwSeries.length / 5)} />
+                    <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false}
+                      tickFormatter={v => fmtNum(v, 0)} domain={['auto', 'auto']} />
+                    <Tooltip content={({ active, payload, label }) =>
+                      active && payload?.length
+                        ? <div className="rounded border px-2 py-1 text-xs shadow"
+                            style={{ background: C.header, borderColor: C.border }}>
+                            <p style={{ color: C.muted }}>{label}</p>
+                            <p style={{ color: sc }}><b>₩ {fmtNum(payload[0].value, 1)}</b></p>
+                          </div>
+                        : null
+                    } />
+                    <ReferenceLine y={1400} stroke={C.red}    strokeDasharray="3 3"
+                      label={{ value: '1,400 위험', fill: C.red,    fontSize: 8, position: 'insideTopRight' }} />
+                    <ReferenceLine y={1350} stroke={C.orange} strokeDasharray="3 3"
+                      label={{ value: '1,350 주의', fill: C.orange, fontSize: 8, position: 'insideTopRight' }} />
+                    <Area type="monotone" dataKey="value" stroke={sc} fill="url(#krwAreaGrad)"
+                      strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[185px] flex items-center justify-center rounded"
+                style={{ background: C.header, border: `1px dashed ${C.border}` }}>
+                <p className="text-[10px]" style={{ color: C.border }}>매일 04:00 KST 갱신</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -736,76 +787,123 @@ function UsdKrwWidget() {
 function BitcoinWidget() {
   const C = useC()
   const { data, loading, error, refetch } = useBitcoin()
-  const change = data?.change24h ?? 0
-  const isUp   = change >= 0
-  const cc     = isUp ? C.green : C.red
-  const signal = change <= -5
+  const { data: mkt } = useMarketData()
+  const change  = data?.change24h ?? 0
+  const isUp    = change >= 0
+  const cc      = isUp ? C.green : C.red
+  const signal  = change <= -5
     ? { label: '⚠ 위험자산 기피', color: C.red }
     : change >= 5
       ? { label: '위험자산 선호↑', color: C.green }
       : null
+  const btcSeries = (mkt?.btc?.series ?? []).slice(-30)
 
   return (
     <Widget title="비트코인 (위험자산 선호도)" badge={signal?.label} badgeColor={signal?.color}
       helpKey="btc" source="CoinGecko API" sourceUrl="https://www.coingecko.com/en/api"
-      isLive>
+      source2="Yahoo Finance (추세)" sourceUrl2="https://finance.yahoo.com/quote/BTC-USD/"
+      isLive className="col-span-2">
       <InfoBox>
         비트코인은 위험자산 선호도의 선행 지표.
         <span style={{ color: C.red }}> 24h -5%↓</span>는 주식 조정의 전조 신호로 활용합니다.
       </InfoBox>
       {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
-        <div className="space-y-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>BTC / USD</p>
-            <div className="flex items-end gap-2">
-              <p className="text-2xl font-bold" style={{ color: C.text }}>${fmtNum(data.usd)}</p>
-              <div className="mb-0.5 flex items-center gap-1">
-                {isUp ? <TrendingUp size={13} color={cc} /> : <TrendingDown size={13} color={cc} />}
-                <span className="text-sm font-semibold" style={{ color: cc }}>
-                  {isUp ? '+' : ''}{change.toFixed(2)}%
-                </span>
-                <span className="text-[10px]" style={{ color: C.muted }}>24h</span>
+        <div className="flex gap-5">
+          {/* 좌측: 현재값 + 시가총액 + 시그널 + 변동 바 */}
+          <div className="w-52 shrink-0 space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>BTC / USD</p>
+              <div className="flex items-end gap-2">
+                <p className="text-2xl font-bold" style={{ color: C.text }}>${fmtNum(data.usd)}</p>
+                <div className="mb-0.5 flex items-center gap-1">
+                  {isUp ? <TrendingUp size={13} color={cc} /> : <TrendingDown size={13} color={cc} />}
+                  <span className="text-sm font-semibold" style={{ color: cc }}>
+                    {isUp ? '+' : ''}{change.toFixed(2)}%
+                  </span>
+                  <span className="text-[10px]" style={{ color: C.muted }}>24h</span>
+                </div>
+              </div>
+              <p className="text-xs mt-0.5" style={{ color: C.muted }}>≈ ₩{fmtNum(data.krw)}</p>
+            </div>
+            {/* 시가총액 */}
+            <div className="rounded px-3 py-2" style={{ background: C.border + '60' }}>
+              <p className="text-[10px]" style={{ color: C.muted }}>시가총액</p>
+              <p className="text-sm font-semibold" style={{ color: C.text }}>
+                ${(data.capUsd / 1e12).toFixed(2)}조 USD
+              </p>
+            </div>
+            {/* 시그널 기준 */}
+            <div className="space-y-1 text-[10px]">
+              <p style={{ color: C.muted }}>📊 시그널 해석 기준</p>
+              {[
+                { cond: '+5%↑',  label: '위험자산 매수세 강함',         color: C.green },
+                { cond: '±5%',   label: '중립 / 방향성 탐색',           color: C.muted },
+                { cond: '-5%↓',  label: '위험자산 기피 시작',           color: C.orange },
+                { cond: '-10%↓', label: '강한 위험 회피 → 비중 축소 검토', color: C.red },
+              ].map(s => (
+                <div key={s.cond} className="flex items-center gap-2">
+                  <span className="font-mono w-10 shrink-0" style={{ color: s.color }}>{s.cond}</span>
+                  <span style={{ color: C.muted }}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+            {/* 변동 바 */}
+            <div>
+              <p className="text-[9px] mb-1" style={{ color: C.muted }}>24시간 변동 위치 (±10% 기준)</p>
+              <div className="relative h-2 rounded-full overflow-hidden" style={{ background: C.border }}>
+                <div className="absolute h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min(Math.abs(change) / 10 * 50, 50)}%`,
+                    left:  isUp ? '50%' : `${50 - Math.min(Math.abs(change) / 10 * 50, 50)}%`,
+                    background: cc,
+                  }} />
+                <div className="absolute top-0 bottom-0 left-1/2 w-px" style={{ background: C.muted }} />
+              </div>
+              <div className="flex justify-between text-[9px] mt-0.5" style={{ color: C.muted }}>
+                <span>-10%</span><span>0</span><span>+10%</span>
               </div>
             </div>
-            <p className="text-xs mt-0.5" style={{ color: C.muted }}>≈ ₩{fmtNum(data.krw)}</p>
           </div>
-          {/* 시가총액 */}
-          <div className="rounded px-3 py-2" style={{ background: C.border + '60' }}>
-            <p className="text-[10px]" style={{ color: C.muted }}>시가총액</p>
-            <p className="text-sm font-semibold" style={{ color: C.text }}>
-              ${(data.capUsd / 1e12).toFixed(2)}조 USD
+          {/* 우측: 추세 차트 */}
+          <div className="flex-1">
+            <p className="text-[10px] mb-1" style={{ color: C.muted }}>
+              최근 30일 추이 {btcSeries.length === 0 && <span style={{ color: C.border }}>(04:00 KST 갱신 후 표시)</span>}
             </p>
-          </div>
-          {/* 시그널 기준 */}
-          <div className="space-y-1 text-[10px]">
-            <p style={{ color: C.muted }}>📊 시그널 해석 기준</p>
-            {[
-              { cond: '+5%↑',  label: '위험자산 매수세 강함',         color: C.green },
-              { cond: '±5%',   label: '중립 / 방향성 탐색',           color: C.muted },
-              { cond: '-5%↓',  label: '위험자산 기피 시작',           color: C.orange },
-              { cond: '-10%↓', label: '강한 위험 회피 → 비중 축소 검토', color: C.red },
-            ].map(s => (
-              <div key={s.cond} className="flex items-center gap-2">
-                <span className="font-mono w-10 shrink-0" style={{ color: s.color }}>{s.cond}</span>
-                <span style={{ color: C.muted }}>{s.label}</span>
+            {btcSeries.length > 0 ? (
+              <div className="h-[185px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={btcSeries} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="btcAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={cc} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={cc} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                    <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false}
+                      interval={Math.floor(btcSeries.length / 5)} />
+                    <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false}
+                      tickFormatter={v => `$${(v / 1000).toFixed(0)}K`} domain={['auto', 'auto']} />
+                    <Tooltip content={({ active, payload, label }) =>
+                      active && payload?.length
+                        ? <div className="rounded border px-2 py-1 text-xs shadow"
+                            style={{ background: C.header, borderColor: C.border }}>
+                            <p style={{ color: C.muted }}>{label}</p>
+                            <p style={{ color: cc }}><b>${fmtNum(payload[0].value)}</b></p>
+                          </div>
+                        : null
+                    } />
+                    <Area type="monotone" dataKey="value" stroke={cc} fill="url(#btcAreaGrad)"
+                      strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
-          {/* 변동 바 */}
-          <div>
-            <p className="text-[9px] mb-1" style={{ color: C.muted }}>24시간 변동 위치 (±10% 기준)</p>
-            <div className="relative h-2 rounded-full overflow-hidden" style={{ background: C.border }}>
-              <div className="absolute h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${Math.min(Math.abs(change) / 10 * 50, 50)}%`,
-                  left:  isUp ? '50%' : `${50 - Math.min(Math.abs(change) / 10 * 50, 50)}%`,
-                  background: cc,
-                }} />
-              <div className="absolute top-0 bottom-0 left-1/2 w-px" style={{ background: C.muted }} />
-            </div>
-            <div className="flex justify-between text-[9px] mt-0.5" style={{ color: C.muted }}>
-              <span>-10%</span><span>0</span><span>+10%</span>
-            </div>
+            ) : (
+              <div className="h-[185px] flex items-center justify-center rounded"
+                style={{ background: C.header, border: `1px dashed ${C.border}` }}>
+                <p className="text-[10px]" style={{ color: C.border }}>매일 04:00 KST 갱신</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1338,6 +1436,64 @@ function computeKrFng(mkt, breadth) {
   return { score: total, components }
 }
 
+/** 일별 한국장 공포탐욕 시계열 (market.json 시계열 데이터로 자체 계산) */
+function computeKrFngSeries(mkt, breadth) {
+  const kospiArr  = mkt?.kospi?.series  ?? []
+  const kosdaqArr = mkt?.kosdaq?.series ?? []
+  const vixArr    = mkt?.vix?.series    ?? []
+  const kr10yArr  = mkt?.kr_10y?.series ?? []
+  const kr3yArr   = mkt?.kr_3y?.series  ?? []
+  const breadthRatio = breadth?.latest?.ratio ?? 50
+
+  if (kospiArr.length < 5) return []
+
+  const kosdaqChgByDate = {}
+  for (let i = 1; i < kosdaqArr.length; i++) {
+    const pv = kosdaqArr[i - 1].value
+    const cv = kosdaqArr[i].value
+    if (pv) kosdaqChgByDate[kosdaqArr[i].date] = (cv / pv - 1) * 100
+  }
+  const vixByDate   = Object.fromEntries(vixArr.map(d   => [d.date, d.value]))
+  const kr10yByDate = Object.fromEntries(kr10yArr.map(d => [d.date, d.value]))
+  const kr3yByDate  = Object.fromEntries(kr3yArr.map(d  => [d.date, d.value]))
+
+  const result = []
+  for (let i = 1; i < kospiArr.length; i++) {
+    const date  = kospiArr[i].date
+    const cur   = kospiArr[i].value
+    const prev  = kospiArr[i - 1].value
+
+    // 1. KOSPI 모멘텀 (MA 이격도)
+    const slice = kospiArr.slice(Math.max(0, i - 19), i + 1)
+    const ma    = slice.reduce((s, d) => s + d.value, 0) / slice.length
+    const dev   = (cur / ma - 1) * 100
+    const kospiScore = Math.max(0, Math.min(100, (dev + 5) / 10 * 100))
+
+    // 2. KOSDAQ 상대강도 (당일 전일비 vs KOSPI 전일비)
+    const kp  = prev ? (cur / prev - 1) * 100 : 0
+    const kdp = kosdaqChgByDate[date] ?? 0
+    const kosdaqScore = Math.max(0, Math.min(100, (kdp - kp + 3) / 6 * 100))
+
+    // 3. VIX 역수
+    const vix = vixByDate[date]
+    const vixScore = vix != null ? Math.max(0, Math.min(100, (45 - vix) / 35 * 100)) : 50
+
+    // 4. 수익률 곡선 (KR10Y − KR3Y)
+    const kr10y = kr10yByDate[date]
+    const kr3y  = kr3yByDate[date]
+    let curveScore = 50
+    if (kr10y != null && kr3y != null) {
+      curveScore = Math.max(0, Math.min(100, (kr10y - kr3y + 0.5) / 2 * 100))
+    }
+
+    const total = Math.round(
+      kospiScore * 0.25 + kosdaqScore * 0.20 + breadthRatio * 0.25 + vixScore * 0.20 + curveScore * 0.10
+    )
+    result.push({ date, value: total })
+  }
+  return result.slice(-30)
+}
+
 function KrFngWidget() {
   const C = useC()
   const { data: mkt,     loading: ml, error: me, refetch: mr } = useMarketData()
@@ -1349,6 +1505,7 @@ function KrFngWidget() {
   const val     = result?.score ?? null
   const status  = val !== null ? getFngStatus(C, val) : null
   const gc      = status?.color ?? C.muted
+  const krFngSeries = (!loading && !error && mkt) ? computeKrFngSeries(mkt, breadth) : []
 
   return (
     <Widget title="한국장 공포탐욕지수 (복합 산출)" badge={status?.label} badgeColor={status?.color}
@@ -1442,15 +1599,46 @@ function KrFngWidget() {
               </div>
             </div>
 
-            {/* 산식 설명 박스 */}
-            <div className="rounded p-2.5 text-[9px] space-y-1"
-              style={{ background: C.header, border: `1px solid ${C.border}` }}>
-              <p style={{ color: C.muted }}>📊 가중합산 산식</p>
-              <p style={{ color: C.border }}>
-                KOSPI 이격도(25%) + KOSDAQ 상대강도(20%) + 신고가비율(25%) + VIX역수(20%) + 수익률곡선(10%)
-              </p>
-              <p style={{ color: C.border }}>※ 공식 지수 아님 · 매일 04:00 KST 갱신 데이터 기반 · 참고 전용</p>
-            </div>
+            {/* 추세 차트 */}
+            {krFngSeries.length > 0 && (
+              <div>
+                <p className="text-[10px] mb-1" style={{ color: C.muted }}>최근 30일 추이</p>
+                <div className="h-[110px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={krFngSeries} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="krFngAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor={gc} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={gc} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                      <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 8 }} tickLine={false} axisLine={false}
+                        interval={Math.floor(krFngSeries.length / 5)} />
+                      <YAxis domain={[0, 100]} tick={{ fill: C.muted, fontSize: 8 }} tickLine={false} axisLine={false} />
+                      <Tooltip content={({ active, payload, label }) =>
+                        active && payload?.length
+                          ? <div className="rounded border px-2 py-1 text-xs shadow"
+                              style={{ background: C.header, borderColor: C.border }}>
+                              <p style={{ color: C.muted }}>{label}</p>
+                              <p style={{ color: getFngStatus(C, payload[0].value).color }}>
+                                <b>{payload[0].value}</b> — {getFngStatus(C, payload[0].value).label}
+                              </p>
+                            </div>
+                          : null
+                      } />
+                      <ReferenceLine y={25} stroke={C.red}   strokeDasharray="3 3" />
+                      <ReferenceLine y={75} stroke={C.green} strokeDasharray="3 3" />
+                      <Area type="monotone" dataKey="value" stroke={gc} fill="url(#krFngAreaGrad)"
+                        strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-[9px] mt-1" style={{ color: C.border }}>
+                  ※ KOSPI 이격도(25%)·KOSDAQ 강도(20%)·신고가(25%)·VIX역수(20%)·수익률곡선(10%) · 참고 전용
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1749,8 +1937,12 @@ export default function Dashboard() {
               <div className="col-span-1 sm:col-span-2">
                 <FearAndGreedWidget />
               </div>
-              <UsdKrwWidget />
-              <BitcoinWidget />
+              <div className="col-span-1 sm:col-span-2">
+                <UsdKrwWidget />
+              </div>
+              <div className="col-span-1 sm:col-span-2">
+                <BitcoinWidget />
+              </div>
               <GoldWidget />
 
               {/* ── 섹션 2: 주요 지수 (GitHub Actions) ── */}

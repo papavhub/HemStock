@@ -83,6 +83,8 @@ SYMBOLS = [
     ("kospi",        "^KS11",     "3mo",  "KOSPI"),
     ("kosdaq",       "^KQ11",     "3mo",  "KOSDAQ"),
     ("gold",         "GC=F",      "3mo",  "GOLD"),
+    ("usdkrw",       "KRW=X",     "3mo",  "USD/KRW"), # 원달러 환율 추세용
+    ("btc",          "BTC-USD",   "3mo",  "BTC"),     # 비트코인 추세용
     # 한국 금리는 Yahoo Finance 미지원 → fetch_kr_rates.py (BOK ECOS) 별도 수집
 ]
 
