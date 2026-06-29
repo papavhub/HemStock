@@ -25,7 +25,7 @@ MARKET_PATH = Path(__file__).resolve().parent.parent / "public" / "data" / "mark
 KST      = timezone(timedelta(hours=9))
 KEY      = os.environ.get("BOK_API_KEY", "").strip()
 BASE     = "https://ecos.bok.or.kr/api"
-STAT     = "028Y001"   # 시장금리(일별)
+STAT     = "817Y002"   # 시장금리(일별)
 
 
 # ── Step 1: 항목 목록 조회 → 국고채 3Y/10Y 코드 탐색 ─────────────
@@ -69,7 +69,7 @@ def fetch_series(item_code: str, label: str) -> dict:
 
     url = (
         f"{BASE}/StatisticSearch/{KEY}/json/kr"
-        f"/1/100/{STAT}/DD/{start_date}/{end_date}/{item_code}"
+        f"/1/100/{STAT}/D/{start_date}/{end_date}/{item_code}"
     )
     try:
         r    = requests.get(url, timeout=15)
