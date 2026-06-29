@@ -40,7 +40,7 @@ const HELP = {
   nps:
     '국민연금은 국내 주식 시장의 최대 기관 투자자(약 100조+)입니다. 매일 새벽 GitHub Actions가 데이터를 갱신하며, 기관이 장기적으로 모아가는 우량주 수급의 뼈대를 확인하는 용도입니다.',
   fed:
-    '미 국채 10Y 금리와 달러 인덱스(DXY). 두 지표가 동시에 오르면 위험자산에서 돈이 빠져나가는 신호입니다. 하향 안정화될 때 적극적 매매를 고려하세요.',
+    '한·미 국채 금리와 달러 인덱스(DXY). 미국 10Y 금리·달러가 동시에 오르면 위험자산에서 돈이 빠져나가는 신호입니다. 한미 금리차(KR-US)가 마이너스면 외인 자본 이탈 압력이 높아집니다.',
   breadth:
     '지수가 오르는데 신고가 종목이 줄면 소수 대형주만 오르는 \'착시 현상\'으로 하락의 전조입니다. 반대로 지수가 지지부진해도 신고가 종목이 늘면 장의 체력이 좋아지는 신호입니다.',
   fng:
@@ -803,61 +803,107 @@ function NpsWidget() {
 }
 
 // ═══════════════════════════════════════════════════
-// 위젯 ⑥: 연준 방향성 (GitHub Actions — yfinance)
+// 위젯 ⑥: 금리 / 매크로 (GitHub Actions — yfinance)
 // ═══════════════════════════════════════════════════
 function FedWidget() {
   const C = useC()
   const { data, loading, error, refetch } = useMarketData()
-  const tnx    = data?.treasury_10y
-  const dxy    = data?.dxy
+  const tnx   = data?.treasury_10y
+  const us3m  = data?.treasury_2y    // key name in json: treasury_2y (실제론 3개월물 ^IRX)
+  const kr10y = data?.kr_10y
+  const kr3y  = data?.kr_3y
+  const dxy   = data?.dxy
+
   const rateUp = (tnx?.change ?? 0) > 0
   const dxyUp  = (dxy?.change ?? 0) > 0
   const danger = rateUp && dxyUp
 
-  // 차트: 금리와 DXY를 같은 날짜로 병합
-  const fedChart = (() => {
-    const tnxMap = {}
-    ;(tnx?.series ?? []).forEach(d => { tnxMap[d.date] = d.value })
-    return (dxy?.series ?? []).map(d => ({
-      date: d.date,
-      dxy:  d.value,
-      rate: tnxMap[d.date] ?? null,
-    })).filter(d => d.rate !== null).slice(-20) // 최근 20일
+  // 한미 10Y 금리 스프레드 (KR - US)
+  const spread = (kr10y?.latest != null && tnx?.latest != null)
+    ? (kr10y.latest - tnx.latest).toFixed(2)
+    : null
+
+  // 차트: 미국·한국 10Y 금리를 날짜로 병합
+  const rateChart = (() => {
+    const tnxMap  = {}; (tnx?.series   ?? []).forEach(d => { tnxMap[d.date]  = d.value })
+    const krMap   = {}; (kr10y?.series ?? []).forEach(d => { krMap[d.date]   = d.value })
+    const kr3Map  = {}; (kr3y?.series  ?? []).forEach(d => { kr3Map[d.date]  = d.value })
+    const us3Map  = {}; (us3m?.series  ?? []).forEach(d => { us3Map[d.date]  = d.value })
+    const dates = [...new Set([
+      ...(tnx?.series ?? []).map(d => d.date),
+      ...(kr10y?.series ?? []).map(d => d.date),
+    ])].sort()
+    return dates.map(date => ({
+      date,
+      us10y: tnxMap[date]  ?? null,
+      us3m:  us3Map[date]  ?? null,
+      kr10y: krMap[date]   ?? null,
+      kr3y:  kr3Map[date]  ?? null,
+    })).filter(d => d.us10y !== null || d.kr10y !== null).slice(-30)
   })()
 
+  const rates = [
+    { label: '미 국채 10Y', key: 'us10y', value: tnx?.latest,   pct: tnx?.change_pct,   color: C.accent,  flag: '🇺🇸' },
+    { label: '미 국채 3M',  key: 'us3m',  value: us3m?.latest,  pct: us3m?.change_pct,  color: C.purple,  flag: '🇺🇸' },
+    { label: '한국 국채 10Y',key: 'kr10y',value: kr10y?.latest, pct: kr10y?.change_pct, color: C.orange,  flag: '🇰🇷' },
+    { label: '한국 국채 3Y', key: 'kr3y', value: kr3y?.latest,  pct: kr3y?.change_pct,  color: C.yellow,  flag: '🇰🇷' },
+  ]
+
   return (
-    <Widget title="연준(Fed) 방향성 / 매크로"
+    <Widget title="금리 · 매크로"
       badge={danger ? '⚠ 위험자산 주의' : '안정'} badgeColor={danger ? C.red : C.green}
-      helpKey="fed" source="Yahoo Finance (^TNX · DX-Y.NYB)"
+      helpKey="fed" source="Yahoo Finance (^TNX · KR10YT=RR)"
       sourceUrl="https://finance.yahoo.com/quote/%5ETNX/" className="col-span-2">
       <InfoBox>
-        미 국채 10Y 금리(채권 시장 기준)와 달러 인덱스(DXY).
-        <span style={{ color: C.red }}> 두 지표 동반 상승</span> = 주식에서 채권·달러로 돈 이동.
+        미·한국 금리와 달러 인덱스(DXY).
+        <span style={{ color: C.red }}> 미국 금리·달러 동반 상승</span> = 주식에서 채권·달러로 돈 이동.
         매일 새벽 GitHub Actions (yfinance)가 자동 갱신합니다.
         {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
       </InfoBox>
       {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (
         <>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>미 국채 10Y 금리</p>
-              <p className="text-xl font-semibold" style={{ color: rateUp ? C.red : C.green }}>
-                {tnx?.latest?.toFixed(2) ?? '—'}%
-              </p>
-              <p className="text-[10px]" style={{ color: rateUp ? C.red : C.green }}>
-                {rateUp ? '▲ 상승 (채권매도·주식부담)' : '▼ 하락 (주식 우호적)'}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>달러 인덱스 (DXY)</p>
-              <p className="text-xl font-semibold" style={{ color: dxyUp ? C.red : C.green }}>
-                {dxy?.latest?.toFixed(2) ?? '—'}
-              </p>
-              <p className="text-[10px]" style={{ color: dxyUp ? C.red : C.green }}>
-                {dxyUp ? '▲ 강달러 (신흥국 자금 이탈)' : '▼ 약달러 (위험자산 선호)'}
-              </p>
+          {/* 금리 4개 수치 그리드 */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {rates.map(r => {
+              const up = (r.pct ?? 0) > 0
+              return (
+                <div key={r.key} className="rounded p-2" style={{ background: C.header, border: `1px solid ${C.border}` }}>
+                  <p className="text-[10px] mb-0.5" style={{ color: C.muted }}>{r.flag} {r.label}</p>
+                  <div className="flex items-end gap-1.5">
+                    <p className="text-lg font-bold" style={{ color: r.value != null ? r.color : C.muted }}>
+                      {r.value != null ? `${r.value.toFixed(2)}%` : '—'}
+                    </p>
+                    {r.pct != null && (
+                      <p className="text-[10px] mb-0.5 font-semibold" style={{ color: up ? C.red : C.green }}>
+                        {up ? '▲' : '▼'} {Math.abs(r.pct).toFixed(2)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* 스프레드 & DXY */}
+          <div className="flex gap-2 mb-3">
+            {spread !== null && (
+              <div className="flex-1 rounded px-3 py-1.5 text-[10px]"
+                style={{ background: C.border + '50', border: `1px solid ${C.border}` }}>
+                <span style={{ color: C.muted }}>한미 금리차 (KR10Y − US10Y) </span>
+                <span className="font-semibold" style={{ color: parseFloat(spread) >= 0 ? C.green : C.red }}>
+                  {parseFloat(spread) >= 0 ? '+' : ''}{spread}%p
+                </span>
+              </div>
+            )}
+            <div className="flex-1 rounded px-3 py-1.5 text-[10px]"
+              style={{ background: C.border + '50', border: `1px solid ${C.border}` }}>
+              <span style={{ color: C.muted }}>DXY </span>
+              <span className="font-semibold" style={{ color: dxyUp ? C.red : C.green }}>
+                {dxy?.latest?.toFixed(2) ?? '—'} {dxyUp ? '▲ 강달러' : '▼ 약달러'}
+              </span>
             </div>
           </div>
+
           {danger && (
             <div className="mb-2 flex items-center gap-1.5 rounded border px-2 py-1.5 text-[10px]"
               style={{ color: C.red, borderColor: C.red + '40', background: C.red + '10' }}>
@@ -865,17 +911,40 @@ function FedWidget() {
               금리·달러 동반 상승 — 주식 비중 보수적 조절 고려
             </div>
           )}
-          <div className="h-24">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={fedChart} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
-                <Tooltip content={<ChartTooltip />} />
-                <Line type="monotone" dataKey="rate" name="금리(%)" stroke={C.accent} strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="dxy"  name="DXY"    stroke={C.orange}  strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
-              </LineChart>
-            </ResponsiveContainer>
+
+          {/* 차트: 한미 10Y 금리 추이 */}
+          <div>
+            <p className="text-[9px] mb-1" style={{ color: C.muted }}>한·미 국채 금리 추이 (30일)</p>
+            <div className="h-28">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={rateChart} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                  <XAxis dataKey="date" tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fill: C.muted, fontSize: 9 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <Tooltip content={<ChartTooltip unit="%" />} />
+                  <Line type="monotone" dataKey="us10y" name="미국10Y(%)" stroke={C.accent}  strokeWidth={1.5} dot={false} />
+                  <Line type="monotone" dataKey="kr10y" name="한국10Y(%)" stroke={C.orange}  strokeWidth={1.5} dot={false} />
+                  <Line type="monotone" dataKey="kr3y"  name="한국3Y(%)"  stroke={C.yellow}  strokeWidth={1}   dot={false} strokeDasharray="4 4" />
+                  <Line type="monotone" dataKey="us3m"  name="미국3M(%)"  stroke={C.purple}  strokeWidth={1}   dot={false} strokeDasharray="4 4" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-3 mt-1">
+              {[
+                { color: C.accent, label: '🇺🇸 미국 10Y', dash: false },
+                { color: C.purple, label: '🇺🇸 미국 3M',  dash: true  },
+                { color: C.orange, label: '🇰🇷 한국 10Y', dash: false },
+                { color: C.yellow, label: '🇰🇷 한국 3Y',  dash: true  },
+              ].map(l => (
+                <div key={l.label} className="flex items-center gap-1 text-[9px]" style={{ color: C.muted }}>
+                  <svg width="18" height="8">
+                    <line x1="0" y1="4" x2="18" y2="4" stroke={l.color} strokeWidth="2"
+                      strokeDasharray={l.dash ? '4 3' : 'none'} />
+                  </svg>
+                  {l.label}
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}
@@ -1273,6 +1342,12 @@ function TopBar({ isDark, toggleTheme }) {
       value: mkt?.treasury_10y?.latest != null ? `${mkt.treasury_10y.latest.toFixed(2)}%` : '로딩...',
       change: sign(mkt?.treasury_10y?.change_pct),
       up: (mkt?.treasury_10y?.change_pct ?? 0) >= 0,
+    },
+    {
+      name: 'KR10Y',
+      value: mkt?.kr_10y?.latest != null ? `${mkt.kr_10y.latest.toFixed(2)}%` : '—',
+      change: sign(mkt?.kr_10y?.change_pct),
+      up: (mkt?.kr_10y?.change_pct ?? 0) >= 0,
     },
     {
       name: 'USD/KRW',
