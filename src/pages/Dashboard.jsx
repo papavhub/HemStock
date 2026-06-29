@@ -1269,6 +1269,12 @@ function TopBar({ isDark, toggleTheme }) {
     { name: 'S&P500',  value: fmt(mkt?.spx?.latest,    2), change: sign(mkt?.spx?.change_pct),    up: (mkt?.spx?.change_pct    ?? 0) >= 0 },
     { name: 'NASDAQ',  value: fmt(mkt?.nasdaq?.latest,  2), change: sign(mkt?.nasdaq?.change_pct), up: (mkt?.nasdaq?.change_pct ?? 0) >= 0 },
     {
+      name: 'US10Y',
+      value: mkt?.treasury_10y?.latest != null ? `${mkt.treasury_10y.latest.toFixed(2)}%` : '로딩...',
+      change: sign(mkt?.treasury_10y?.change_pct),
+      up: (mkt?.treasury_10y?.change_pct ?? 0) >= 0,
+    },
+    {
       name: 'USD/KRW',
       value: fxData?.krw ? `${fxData.krw.toFixed(1)}` : '로딩...',
       change: '', up: false, isLive: !!fxData,
