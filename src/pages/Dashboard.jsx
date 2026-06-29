@@ -1252,7 +1252,7 @@ function Sidebar() {
 function TopBar({ isDark, toggleTheme }) {
   const C = useC()
   const { data: fxData } = useUsdKrw()
-  const { data: mkt } = useMarket()
+  const { data: mkt } = useMarketData()
   const [time, setTime] = useState(new Date())
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
