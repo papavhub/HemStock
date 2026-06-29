@@ -74,18 +74,16 @@ def fetch_series(symbol: str, period: str = "3mo", label: str = "") -> dict:
 SYMBOLS = [
     # (key, symbol, period, label)
     ("vix",          "^VIX",      "1mo",  "VIX"),
-    # 미국 금리
+    # 미국 금리 (Yahoo Finance)
     ("treasury_10y", "^TNX",      "3mo",  "US10Y"),   # 미 국채 10Y
-    ("treasury_2y",  "^IRX",      "3mo",  "US3M"),    # 미 국채 3개월물 (단기금리 proxy)
+    ("treasury_2y",  "^IRX",      "3mo",  "US3M"),    # 미 국채 3개월물 (단기금리)
     ("dxy",          "DX-Y.NYB",  "3mo",  "DXY"),
     ("spx",          "^GSPC",     "3mo",  "S&P500"),
     ("nasdaq",       "^IXIC",     "3mo",  "NASDAQ"),
     ("kospi",        "^KS11",     "3mo",  "KOSPI"),
     ("kosdaq",       "^KQ11",     "3mo",  "KOSDAQ"),
     ("gold",         "GC=F",      "3mo",  "GOLD"),
-    # 한국 금리 (Reuters/Yahoo Finance 티커)
-    ("kr_10y",       "KR10YT=RR", "3mo",  "KR10Y"),   # 한국 국채 10Y
-    ("kr_3y",        "KR3YT=RR",  "3mo",  "KR3Y"),    # 한국 국채 3Y
+    # 한국 금리는 Yahoo Finance 미지원 → fetch_kr_rates.py (BOK ECOS) 별도 수집
 ]
 
 

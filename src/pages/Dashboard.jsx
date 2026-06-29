@@ -852,12 +852,15 @@ function FedWidget() {
   return (
     <Widget title="금리 · 매크로"
       badge={danger ? '⚠ 위험자산 주의' : '안정'} badgeColor={danger ? C.red : C.green}
-      helpKey="fed" source="Yahoo Finance (^TNX · KR10YT=RR)"
+      helpKey="fed" source="Yahoo Finance (^TNX · ^IRX)"
       sourceUrl="https://finance.yahoo.com/quote/%5ETNX/" className="col-span-2">
       <InfoBox>
         미·한국 금리와 달러 인덱스(DXY).
         <span style={{ color: C.red }}> 미국 금리·달러 동반 상승</span> = 주식에서 채권·달러로 돈 이동.
-        매일 새벽 GitHub Actions (yfinance)가 자동 갱신합니다.
+        미국 금리: Yahoo Finance (yfinance) · 한국 금리:{' '}
+        <a href="https://ecos.bok.or.kr" target="_blank" rel="noopener noreferrer"
+          style={{ color: C.accent }}>한국은행 ECOS</a>.
+        매일 새벽 04:00 KST 자동 갱신.
         {data?.updated_at && <span style={{ color: C.muted }}> · 갱신: {data.updated_at}</span>}
       </InfoBox>
       {loading ? <Spinner /> : error ? <ApiError msg={error} onRetry={refetch} /> : (

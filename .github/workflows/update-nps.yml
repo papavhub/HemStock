@@ -57,6 +57,12 @@ jobs:
       - name: 신고가 비율 수집 (KOSPI 주요주)
         run: python scripts/fetch_breadth.py
 
+      # ④ 한국 국채 금리 (한국은행 ECOS OpenAPI)
+      - name: 한국 국채 금리 수집 (BOK ECOS)
+        env:
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: python scripts/fetch_kr_rates.py
+
       - name: 변경 여부 확인
         id: check
         run: |
