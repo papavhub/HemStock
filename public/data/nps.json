@@ -1,22 +1,14 @@
 {
-  "updated_at": "2026-07-01 05:56 KST",
+  "updated_at": "2026-07-02 05:47 KST",
   "source": "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
       "name": "삼성전기",
-      "value": 10.92,
-      "change": 0.0,
-      "amount": "지분율 10.92%",
-      "rcept_dt": "2026-01-02",
+      "value": 9.87,
+      "change": -1.05,
+      "amount": "지분율 9.87%",
+      "rcept_dt": "2026-07-01",
       "rank": 1
-    },
-    {
-      "name": "현대제철",
-      "value": 9.89,
-      "change": 1.1,
-      "amount": "지분율 9.89%",
-      "rcept_dt": "2026-04-01",
-      "rank": 2
     },
     {
       "name": "KB금융",
@@ -24,7 +16,7 @@
       "change": 0.39,
       "amount": "지분율 9.33%",
       "rcept_dt": "2026-06-17",
-      "rank": 3
+      "rank": 2
     },
     {
       "name": "현대글로비스",
@@ -32,6 +24,14 @@
       "change": -1.04,
       "amount": "지분율 9.05%",
       "rcept_dt": "2026-05-06",
+      "rank": 3
+    },
+    {
+      "name": "현대제철",
+      "value": 8.84,
+      "change": -1.05,
+      "amount": "지분율 8.84%",
+      "rcept_dt": "2026-07-01",
       "rank": 4
     },
     {
@@ -43,12 +43,28 @@
       "rank": 5
     },
     {
+      "name": "NAVER",
+      "value": 8.22,
+      "change": 0.0,
+      "amount": "지분율 8.22%",
+      "rcept_dt": "2026-07-01",
+      "rank": 6
+    },
+    {
+      "name": "삼성SDI",
+      "value": 7.97,
+      "change": 1.1,
+      "amount": "지분율 7.97%",
+      "rcept_dt": "2026-07-01",
+      "rank": 7
+    },
+    {
       "name": "한화에어로스페이스",
       "value": 7.92,
       "change": 0.0,
       "amount": "지분율 7.92%",
       "rcept_dt": "2025-08-27",
-      "rank": 6
+      "rank": 8
     },
     {
       "name": "HD현대중공업",
@@ -56,7 +72,7 @@
       "change": 0.0,
       "amount": "지분율 7.38%",
       "rcept_dt": "2025-07-02",
-      "rank": 7
+      "rank": 9
     },
     {
       "name": "한국전력공사",
@@ -64,15 +80,7 @@
       "change": 0.0,
       "amount": "지분율 6.88%",
       "rcept_dt": "2026-06-01",
-      "rank": 8
-    },
-    {
-      "name": "삼성SDI",
-      "value": 6.87,
-      "change": 0.0,
-      "amount": "지분율 6.87%",
-      "rcept_dt": "2025-07-02",
-      "rank": 9
+      "rank": 10
     },
     {
       "name": "LG전자",
@@ -80,15 +88,15 @@
       "change": 0.0,
       "amount": "지분율 6.48%",
       "rcept_dt": "2025-08-01",
-      "rank": 10
+      "rank": 11
     },
     {
-      "name": "카카오",
-      "value": 6.4,
-      "change": -1.01,
-      "amount": "지분율 6.40%",
-      "rcept_dt": "2026-04-01",
-      "rank": 11
+      "name": "LG",
+      "value": 6.29,
+      "change": 0.0,
+      "amount": "지분율 6.29%",
+      "rcept_dt": "2026-07-01",
+      "rank": 12
     },
     {
       "name": "크래프톤",
@@ -96,7 +104,7 @@
       "change": 0.0,
       "amount": "지분율 6.10%",
       "rcept_dt": "2026-04-01",
-      "rank": 12
+      "rank": 13
     },
     {
       "name": "SK이노베이션",
@@ -104,7 +112,15 @@
       "change": 1.03,
       "amount": "지분율 6.03%",
       "rcept_dt": "2026-04-01",
-      "rank": 13
+      "rank": 14
+    },
+    {
+      "name": "카카오",
+      "value": 5.39,
+      "change": -1.01,
+      "amount": "지분율 5.39%",
+      "rcept_dt": "2026-07-01",
+      "rank": 15
     },
     {
       "name": "고려아연",
@@ -112,7 +128,7 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2025-10-01",
-      "rank": 14
+      "rank": 16
     }
   ]
 }
