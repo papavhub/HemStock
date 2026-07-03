@@ -917,7 +917,7 @@ function BitcoinWidget() {
 function NpsWidget() {
   const C = useC()
   const { data, loading, error, refetch } = useNpsData()
-  const [tab, setTab] = useState('portfolio')
+  const [tab, setTab] = useState('changes')
   const stocks  = data?.stocks  ?? []
   const changes = data?.changes ?? []
 
