@@ -10,11 +10,10 @@
 결과: public/data/nps.json
 """
 
-import io
 import json
 import os
 import re
-import zipfile
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -40,7 +39,7 @@ SESSION.headers.update(HEADERS)
 
 # ── Step 1: 국민연금 공시 전체 목록 (flr_nm 검색) ────────────────
 def fetch_nps_all_filings() -> list[dict]:
-    """DART list.json에서 국민연금이 제출한 D001 공시 전체 수집 (최근 1년, 최대 5페이지)"""
+    """DART list.json에서 국민연금공단이 제출한 D001 공시 수집 (최근 90일, 최대 5페이지)"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
     bgn_de = (now - timedelta(days=90)).strftime("%Y%m%d")
@@ -50,7 +49,7 @@ def fetch_nps_all_filings() -> list[dict]:
         params = {
             "crtfc_key":        KEY,
             "pblntf_detail_ty": "D001",
-            "flr_nm":           "국민연금",
+            "flr_nm":           "국민연금공단",   # 정확한 제출인명으로 필터
             "bgn_de":           bgn_de,
             "end_de":           end_de,
             "page_no":          str(page),
@@ -67,6 +66,8 @@ def fetch_nps_all_filings() -> list[dict]:
             break
 
         items = data.get("list", [])
+        # 클라이언트 측 재확인: 실제 flr_nm이 국민연금인 것만
+        items = [i for i in items if "국민연금" in i.get("flr_nm", "")]
         all_items.extend(items)
         print(f"  page {page}: {len(items)}건 (누계 {len(all_items)}건)")
 
@@ -118,26 +119,36 @@ def parse_viewer_params(html: str):
 def extract_ratio(text: str):
     soup = BeautifulSoup(text, "html.parser")
 
-    # ① 국민연금 행에서 직접 추출
+    # ① "이번보고서" 행에서 비율 추출 (국민연금공단이 보고자인 경우 직접 추출)
+    for row in soup.find_all("tr"):
+        row_text = row.get_text()
+        if "이번보고서" not in row_text:
+            continue
+        tds = row.find_all("td")
+        for td in tds:
+            raw = td.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "")
+            try:
+                v = float(raw)
+                if 5.0 <= v <= 25.0:
+                    return v
+            except ValueError:
+                pass
+
+    # ② 국민연금 행에서 추출 (국민연금이 특별관계자로 등장하는 경우 fallback)
     best_ratio = None
     for row in soup.find_all("tr"):
         row_text = row.get_text()
         if "국민연금" not in row_text:
             continue
         tds = row.find_all("td")
-        row_ratios = []
         for td in tds:
             raw = td.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "")
             try:
                 v = float(raw)
                 if 5.0 <= v <= 25.0:
-                    row_ratios.append(v)
+                    best_ratio = v
             except ValueError:
                 pass
-        if row_ratios:
-            if "이번보고서" in row_text:
-                return row_ratios[0]
-            best_ratio = row_ratios[0]
 
     if best_ratio is not None:
         return best_ratio
@@ -180,28 +191,33 @@ def extract_ratio(text: str):
 
 
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
-    try:
-        main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
-        res      = SESSION.get(main_url, timeout=15)
-        params   = parse_viewer_params(res.text)
-        if not params:
-            return None
+    for attempt in range(2):
+        try:
+            if attempt > 0:
+                time.sleep(2)
+            main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
+            res      = SESSION.get(main_url, timeout=20)
+            params   = parse_viewer_params(res.text)
+            if not params:
+                return None
 
-        viewer_url = (
-            f"https://dart.fss.or.kr/report/viewer.do"
-            f"?rcpNo={rcept_no}"
-            f"&dcmNo={params['dcmNo']}"
-            f"&eleId={params['eleId']}"
-            f"&offset={params['offset']}"
-            f"&length={params['length']}"
-            f"&dtd={params['dtd']}"
-        )
-        res2  = SESSION.get(viewer_url, timeout=15)
-        return extract_ratio(res2.text)
+            viewer_url = (
+                f"https://dart.fss.or.kr/report/viewer.do"
+                f"?rcpNo={rcept_no}"
+                f"&dcmNo={params['dcmNo']}"
+                f"&eleId={params['eleId']}"
+                f"&offset={params['offset']}"
+                f"&length={params['length']}"
+                f"&dtd={params['dtd']}"
+            )
+            res2  = SESSION.get(viewer_url, timeout=20)
+            return extract_ratio(res2.text)
 
-    except Exception as e:
-        print(f"    [WARN] 뷰어 파싱 실패 {corp_name} ({rcept_no}): {e}")
-        return None
+        except Exception as e:
+            if attempt == 0:
+                continue
+            print(f"    [WARN] 뷰어 파싱 실패 {corp_name} ({rcept_no}): {e}")
+    return None
 
 
 # ── 메인 ─────────────────────────────────────────────────────────
@@ -241,7 +257,7 @@ def fetch_all() -> list[dict]:
         }
 
     stocks = []
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
             executor.submit(fetch_one, name, filing): name
             for name, filing in by_corp.items()
