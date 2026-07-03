@@ -248,15 +248,9 @@ def fetch_all() -> list[dict]:
         if len(rcept_dt) == 8:
             rcept_dt = f"{rcept_dt[:4]}-{rcept_dt[4:6]}-{rcept_dt[6:]}"
         print(f"  ✓ {corp_name:<22} {ratio:.2f}%  ({rcept_dt})")
-        return {
-            "name":     corp_name,
-            "value":    round(ratio, 2),
-            "change":   0,
-            "amount":   f"지분율 {ratio:.2f}%",
-            "rcept_dt": rcept_dt,
-        }
+        return {"name": corp_name, "value": round(ratio, 2), "rcept_dt": rcept_dt}
 
-    stocks = []
+    today_filings = []
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
             executor.submit(fetch_one, name, filing): name
@@ -265,12 +259,46 @@ def fetch_all() -> list[dict]:
         for future in as_completed(futures):
             result = future.result()
             if result:
-                stocks.append(result)
+                today_filings.append(result)
 
-    stocks.sort(key=lambda x: x["value"], reverse=True)
+    return today_filings
+
+
+def merge_portfolio(existing: list[dict], today: list[dict]) -> tuple[list[dict], list[dict]]:
+    """기존 누적 포트폴리오와 오늘 공시를 합산, 변동 목록도 반환"""
+    portfolio = {s["name"]: s for s in existing}
+    changes   = []
+
+    for f in today:
+        name      = f["name"]
+        new_ratio = f["value"]
+        old       = portfolio.get(name)
+        old_ratio = old["value"] if old else None
+        change    = round(new_ratio - old_ratio, 2) if old_ratio is not None else None
+
+        changes.append({
+            "name":     name,
+            "value":    new_ratio,
+            "prev":     old_ratio,
+            "change":   change,
+            "rcept_dt": f["rcept_dt"],
+            "is_new":   old_ratio is None,
+        })
+
+        portfolio[name] = {
+            "name":     name,
+            "value":    new_ratio,
+            "change":   change if change is not None else 0,
+            "amount":   f"지분율 {new_ratio:.2f}%",
+            "rcept_dt": f["rcept_dt"],
+        }
+
+    stocks = sorted(portfolio.values(), key=lambda x: x["value"], reverse=True)
     for i, s in enumerate(stocks, 1):
         s["rank"] = i
-    return stocks
+
+    changes.sort(key=lambda x: abs(x["change"] or 0), reverse=True)
+    return stocks, changes
 
 
 def main():
@@ -280,43 +308,54 @@ def main():
 
     now_kst    = datetime.now(KST)
     updated_at = now_kst.strftime("%Y-%m-%d %H:%M KST")
+    source     = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
 
-    stocks = fetch_all()
+    # 기존 누적 데이터 로드
+    existing_stocks  = []
+    existing_changes = []
+    if OUTPUT_PATH.exists():
+        try:
+            old = json.load(open(OUTPUT_PATH, encoding="utf-8"))
+            existing_stocks  = old.get("stocks",  [])
+            existing_changes = old.get("changes", [])
+        except Exception:
+            pass
 
-    if stocks:
-        source     = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
-        payload    = {"updated_at": updated_at, "source": source, "stocks": stocks}
-    else:
-        # DART 장애 시: 이전 데이터 유지
-        if OUTPUT_PATH.exists():
-            try:
-                with open(OUTPUT_PATH, encoding="utf-8") as f:
-                    old = json.load(f)
-                if old.get("stocks"):
-                    print("\n  ⚠ 수집 실패 — 이전 데이터 유지")
-                    old["updated_at"] += " (DART 장애 — 이전 데이터)"
-                    payload = old
-                    OUTPUT_PATH.write_text(
-                        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-                    )
-                    print(f"\n{'='*55}")
-                    print(f"  ✅ 이전 데이터 유지: {len(old['stocks'])}종목")
-                    print("=" * 55)
-                    return
-            except Exception:
-                pass
-        print("\n  ⚠ 수집 실패 + 이전 데이터 없음 — 빈 목록 저장")
+    today_filings = fetch_all()
+
+    if today_filings:
+        stocks, changes = merge_portfolio(existing_stocks, today_filings)
+        print(f"\n  포트폴리오: {len(stocks)}종목 (오늘 변동: {len(changes)}건)")
         payload = {
-            "updated_at": updated_at + " [error]",
-            "source":     "수집 실패 — DART 공시 데이터 없음",
-            "stocks":     [],
+            "updated_at": updated_at,
+            "source":     source,
+            "stocks":     stocks,
+            "changes":    changes,
         }
+    else:
+        # DART 장애 시: 이전 데이터 유지, changes만 비움
+        if existing_stocks:
+            print("\n  ⚠ 오늘 공시 없음 — 기존 포트폴리오 유지")
+            payload = {
+                "updated_at": updated_at + " (공시 없음 — 이전 포트폴리오 유지)",
+                "source":     source,
+                "stocks":     existing_stocks,
+                "changes":    [],
+            }
+        else:
+            print("\n  ⚠ 수집 실패 + 이전 데이터 없음 — 빈 목록 저장")
+            payload = {
+                "updated_at": updated_at + " [error]",
+                "source":     "수집 실패 — DART 공시 데이터 없음",
+                "stocks":     [],
+                "changes":    [],
+            }
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"\n{'='*55}")
-    print(f"  ✅ 완료: {len(stocks)}종목 | {updated_at}")
+    print(f"  ✅ 완료: {len(payload['stocks'])}종목 (변동 {len(payload['changes'])}건) | {updated_at}")
     print(f"  출처: {payload['source']}")
     print("=" * 55)
 

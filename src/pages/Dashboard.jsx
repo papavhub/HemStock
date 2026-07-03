@@ -917,7 +917,25 @@ function BitcoinWidget() {
 function NpsWidget() {
   const C = useC()
   const { data, loading, error, refetch } = useNpsData()
-  const stocks = data?.stocks ?? []
+  const [tab, setTab] = useState('portfolio')
+  const stocks  = data?.stocks  ?? []
+  const changes = data?.changes ?? []
+
+  const TabBtn = ({ id, label, count }) => (
+    <button onClick={() => setTab(id)}
+      className="flex items-center gap-1.5 px-3 py-1 text-[11px] rounded-t border-b-2 transition-colors"
+      style={{
+        color:       tab === id ? C.accent : C.muted,
+        borderColor: tab === id ? C.accent : 'transparent',
+        background:  tab === id ? C.accent + '10' : 'transparent',
+      }}>
+      {label}
+      {count > 0 && (
+        <span className="px-1 py-0.5 rounded text-[9px]"
+          style={{ background: C.accent + '25', color: C.accent }}>{count}</span>
+      )}
+    </button>
+  )
 
   return (
     <Widget title="국민연금 포트폴리오" badge="NPS · GitHub Actions" badgeColor={C.accent}
@@ -927,83 +945,146 @@ function NpsWidget() {
         국민연금은 국내 최대 기관 투자자(약 100조+). 매일 새벽 4시 GitHub Actions가 자동 갱신.
         이들이 장기 보유하는 종목 방향성과 내 포트폴리오를 비교하세요.
       </InfoBox>
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-[10px]" style={{ color: C.muted }}>
-          업데이트: <span style={{ color: C.text }}>{data?.updated_at ?? '—'}</span>
-          {error && <span className="ml-2" style={{ color: C.orange }}>⚠ {error}</span>}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-1">
+          <TabBtn id="portfolio" label="📋 누적 포트폴리오" count={stocks.length} />
+          <TabBtn id="changes"   label="🔄 최근 변동"       count={changes.length} />
         </div>
-        <button onClick={refetch} disabled={loading}
-          className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border transition-colors"
-          style={{ color: C.muted, borderColor: C.border }}>
-          <RefreshCw size={10} className={loading ? 'animate-spin' : ''} /> 새로고침
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px]" style={{ color: C.muted }}>{data?.updated_at ?? '—'}</span>
+          <button onClick={refetch} disabled={loading}
+            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border"
+            style={{ color: C.muted, borderColor: C.border }}>
+            <RefreshCw size={10} className={loading ? 'animate-spin' : ''} /> 새로고침
+          </button>
+        </div>
       </div>
-      {loading ? <Spinner /> : stocks.length === 0 ? (
+
+      {loading ? <Spinner /> : error && stocks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 gap-2">
           <AlertTriangle size={28} style={{ color: C.orange }} />
           <p className="text-sm font-medium" style={{ color: C.orange }}>데이터를 가져올 수 없습니다</p>
           <p className="text-[11px] text-center" style={{ color: C.muted }}>
-            DART 공시 수집에 실패했습니다.<br />
-            매일 04:00 KST 자동 갱신 시 재시도합니다.
+            DART 공시 수집에 실패했습니다.<br />매일 04:00 KST 자동 갱신 시 재시도합니다.
           </p>
           <button onClick={refetch}
-            className="mt-1 flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors"
+            className="mt-1 flex items-center gap-1 text-xs px-3 py-1.5 rounded border"
             style={{ color: C.accent, borderColor: C.accent + '60' }}>
             <RefreshCw size={11} /> 다시 시도
           </button>
         </div>
+      ) : tab === 'portfolio' ? (
+        /* ── 포트폴리오 탭 ── */
+        stocks.length === 0 ? (
+          <p className="text-xs text-center py-8" style={{ color: C.muted }}>
+            누적 데이터 없음 — 매일 04:00 KST 공시 수집 후 쌓입니다
+          </p>
+        ) : (
+          <div className="flex gap-4">
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: C.border }}>
+                    {['순위','종목','비중(%)','변동','공시일'].map(h => (
+                      <th key={h} className={`pb-2 font-normal ${h==='공시일'?'text-right hidden sm:table-cell':h==='순위'?'text-left':'text-right'}`}
+                        style={{ color: C.muted }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map(s => (
+                    <tr key={s.rank} className="border-b transition-colors"
+                      style={{ borderColor: C.border + '50' }}
+                      onMouseEnter={e => e.currentTarget.style.background = C.border + '30'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td className="py-2 pr-3" style={{ color: C.muted }}>#{s.rank}</td>
+                      <td className="py-2 font-medium" style={{ color: C.text }}>{s.name}</td>
+                      <td className="py-2 text-right" style={{ color: C.accent }}>{s.value?.toFixed(2)}%</td>
+                      <td className="py-2 text-right"
+                        style={{ color: (s.change ?? 0) > 0 ? C.green : (s.change ?? 0) < 0 ? C.red : C.muted }}>
+                        {(s.change ?? 0) > 0 ? '+' : ''}{(s.change ?? 0).toFixed(2)}%
+                      </td>
+                      <td className="py-2 text-right hidden sm:table-cell" style={{ color: C.muted }}>
+                        {s.rcept_dt ? s.rcept_dt.slice(5) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="w-36 shrink-0">
+              <p className="text-[9px] mb-1" style={{ color: C.muted }}>상위 6종목 비중</p>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stocks.slice(0, 6)} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                    <XAxis type="number" tick={{ fill: C.muted, fontSize: 8 }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fill: C.text, fontSize: 8 }} tickLine={false} axisLine={false} width={60} />
+                    <Tooltip content={({ active, payload }) =>
+                      active && payload?.length
+                        ? <div className="rounded border px-2 py-1 text-xs"
+                            style={{ background: C.header, borderColor: C.border }}>
+                            <p style={{ color: C.accent }}>{payload[0].value?.toFixed(2)}%</p>
+                          </div>
+                        : null
+                    } />
+                    <Bar dataKey="value" fill={C.accent} radius={[0, 2, 2, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )
       ) : (
-        <div className="flex gap-4">
-          <div className="flex-1 overflow-auto">
+        /* ── 변동 탭 ── */
+        changes.length === 0 ? (
+          <p className="text-xs text-center py-8" style={{ color: C.muted }}>
+            오늘 변동 공시 없음
+          </p>
+        ) : (
+          <div className="overflow-auto">
+            <p className="text-[10px] mb-2" style={{ color: C.muted }}>
+              오늘 국민연금공단이 제출한 D001 공시 기준 (주식대량보유상황보고)
+            </p>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b" style={{ borderColor: C.border }}>
-                  {['순위','종목','비중(%)','전월比','공시일'].map(h => (
-                    <th key={h} className={`pb-2 font-normal ${h==='공시일'?'text-right hidden sm:table-cell':h==='순위'?'text-left':'text-right'}`}
+                  {['종목','이번 비율','이전 비율','변동','공시일'].map(h => (
+                    <th key={h} className={`pb-2 font-normal ${h==='종목'?'text-left':'text-right'}`}
                       style={{ color: C.muted }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {stocks.map(s => (
-                  <tr key={s.rank} className="border-b transition-colors"
-                    style={{ borderColor: C.border + '50' }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.border + '30'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td className="py-2 pr-3" style={{ color: C.muted }}>#{s.rank}</td>
-                    <td className="py-2 font-medium" style={{ color: C.text }}>{s.name}</td>
-                    <td className="py-2 text-right" style={{ color: C.accent }}>{s.value?.toFixed(1)}%</td>
-                    <td className="py-2 text-right"
-                      style={{ color: s.change > 0 ? C.green : s.change < 0 ? C.red : C.muted }}>
-                      {s.change > 0 ? '+' : ''}{s.change?.toFixed(1)}%
-                    </td>
-                    <td className="py-2 text-right hidden sm:table-cell" style={{ color: C.muted }}>
-                      {s.rcept_dt ? s.rcept_dt.slice(5) : '—'}
-                    </td>
-                  </tr>
-                ))}
+                {changes.map((c, i) => {
+                  const isNew = c.is_new
+                  const chg   = c.change ?? 0
+                  const cc    = isNew ? C.accent : chg > 0 ? C.green : chg < 0 ? C.red : C.muted
+                  return (
+                    <tr key={i} className="border-b transition-colors"
+                      style={{ borderColor: C.border + '50' }}
+                      onMouseEnter={e => e.currentTarget.style.background = C.border + '30'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td className="py-2 font-medium" style={{ color: C.text }}>
+                        {isNew && <span className="mr-1 text-[9px] px-1 rounded" style={{ background: C.accent + '25', color: C.accent }}>신규</span>}
+                        {c.name}
+                      </td>
+                      <td className="py-2 text-right font-semibold" style={{ color: C.accent }}>{c.value?.toFixed(2)}%</td>
+                      <td className="py-2 text-right" style={{ color: C.muted }}>
+                        {c.prev != null ? `${c.prev.toFixed(2)}%` : '—'}
+                      </td>
+                      <td className="py-2 text-right font-semibold" style={{ color: cc }}>
+                        {isNew ? '신규' : `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`}
+                      </td>
+                      <td className="py-2 text-right" style={{ color: C.muted }}>
+                        {c.rcept_dt ? c.rcept_dt.slice(5) : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
-          <div className="w-36 h-52 shrink-0">
-            <p className="text-[9px] mb-1" style={{ color: C.muted }}>비중 시각화</p>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stocks.slice(0, 6)} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                <XAxis type="number" tick={{ fill: C.muted, fontSize: 8 }} tickLine={false} axisLine={false} />
-                <YAxis type="category" dataKey="name" tick={{ fill: C.text, fontSize: 8 }} tickLine={false} axisLine={false} width={60} />
-                <Tooltip content={({ active, payload }) =>
-                  active && payload?.length
-                    ? <div className="rounded border px-2 py-1 text-xs"
-                        style={{ background: C.header, borderColor: C.border }}>
-                        <p style={{ color: C.accent }}>{payload[0].value?.toFixed(1)}%</p>
-                      </div>
-                    : null
-                } />
-                <Bar dataKey="value" fill={C.accent} radius={[0, 2, 2, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )
       )}
     </Widget>
   )
