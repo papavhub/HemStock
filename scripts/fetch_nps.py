@@ -1,11 +1,10 @@
 """
-국민연금 포트폴리오 수집 — 금감원 DART OpenAPI + 공시 뷰어
+국민연금 포트폴리오 수집 — 금감원 DART OpenAPI
 전략:
-  1) corpCode.xml → 대상 종목 corp_code 매핑 (exact match)
-  2) list.json (D001: 주식대량보유상황보고) → 국민연금 공시 발견
-  3) dart.fss.or.kr 뷰어 HTML 스크래핑 → 보유비율 추출
-     (document.json API는 D001 타입에서 101 오류 발생하여 우회)
-  4) 실패 시 빈 목록 반환 (fallback 목 데이터 사용 안 함)
+  1) list.json에서 flr_nm=국민연금 + pblntf_detail_ty=D001 로 전체 공시 검색
+     → 종목 하드코딩 없이 국민연금이 제출한 모든 주식대량보유상황보고 취득
+  2) 종목별 최신 공시만 추려서 dart.fss.or.kr 뷰어 HTML 파싱 → 보유비율 추출
+  3) 이전 nps.json이 있으면 DART 장애 시 fallback으로 유지
 
 환경변수: DART_API_KEY (GitHub Secret)
 결과: public/data/nps.json
@@ -15,9 +14,7 @@ import io
 import json
 import os
 import re
-import time
 import zipfile
-import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -40,96 +37,88 @@ HEADERS = {
 SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
-DART_CORPS = {
-    "삼성전자":           "00126380",
-    "삼성SDI":            "00126362",
-    "삼성전기":           "00126371",
-    "삼성물산":           "00126229",
-    "삼성바이오로직스":   "00877059",
-    "삼성생명":           "00126256",
-    "기아":               "00106641",
-    "현대자동차":         "00164742",
-    "현대모비스":         "00164760",
-    "현대제철":           "00145880",
-    "현대글로비스":       "00360595",
-    "POSCO홀딩스":        "00155319",
-    "KB금융":             "00688996",
-    "신한지주":           "00382199",
-    "하나금융지주":       "00547583",
-    "우리금융지주":       "00375302",
-    "한화에어로스페이스": "00126566",
-    "두산에너빌리티":     "00159616",
-    "한국전력공사":       "00159193",
-    "고려아연":           "00102858",
-    "크래프톤":           "00760971",
-    "NAVER":              "00266961",
-    "HD한국조선해양":     "00164830",
-    "HD현대중공업":       "01390344",
-}
 
-EXTRA_NAMES = [
-    "SK하이닉스", "LG에너지솔루션", "LG화학", "LG전자", "LG",
-    "카카오", "KT", "SK텔레콤", "SK이노베이션", "셀트리온",
-    "카카오뱅크", "SK",
-]
-
-
-# ── Step 1: corpCode.xml에서 추가 종목 매핑 ─────────────────────
-def enrich_corp_codes(base: dict) -> dict:
-    print("  corpCode.xml 다운로드 중...")
-    url = "https://opendart.fss.or.kr/api/corpCode.xml"
-    res = SESSION.get(url, params={"crtfc_key": KEY}, timeout=60)
-    res.raise_for_status()
-
-    with zipfile.ZipFile(io.BytesIO(res.content)) as z:
-        fname = [n for n in z.namelist() if "CORPCODE" in n.upper()][0]
-        with z.open(fname) as f:
-            tree = ET.parse(f)
-
-    result = dict(base)
-    for item in tree.getroot().findall("list"):
-        code       = (item.findtext("corp_code") or "").strip()
-        name       = (item.findtext("corp_name") or "").strip()
-        stock_code = (item.findtext("stock_code") or "").strip()
-        if code and name and stock_code and name in EXTRA_NAMES and name not in result:
-            result[name] = code
-            print(f"    추가 매핑: {name} → {code}")
-
-    print(f"  총 매핑: {len(result)}종목")
-    return result
-
-
-# ── Step 2: 종목별 국민연금 D001 공시 목록 ───────────────────────
-def get_nps_filings(corp_code: str) -> list[dict]:
+# ── Step 1: 국민연금 공시 전체 목록 (flr_nm 검색) ────────────────
+def fetch_nps_all_filings() -> list[dict]:
+    """DART list.json에서 국민연금이 제출한 D001 공시 전체 수집 (최근 1년, 최대 5페이지)"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
     bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")
 
-    params = {
-        "crtfc_key":        KEY,
-        "corp_code":        corp_code,
-        "pblntf_detail_ty": "D001",
-        "bgn_de":           bgn_de,
-        "end_de":           end_de,
-        "page_no":          "1",
-        "page_count":       "20",
-    }
-    res  = SESSION.get("https://opendart.fss.or.kr/api/list.json", params=params, timeout=10)
-    data = res.json()
-    if data.get("status") not in ("000", "013"):
-        return []
-    items = data.get("list", [])
-    nps   = [i for i in items if "국민연금" in i.get("flr_nm", "")]
-    return sorted(nps, key=lambda x: x.get("rcept_dt", ""), reverse=True)
+    all_items = []
+    for page in range(1, 6):
+        params = {
+            "crtfc_key":        KEY,
+            "pblntf_detail_ty": "D001",
+            "flr_nm":           "국민연금",
+            "bgn_de":           bgn_de,
+            "end_de":           end_de,
+            "page_no":          str(page),
+            "page_count":       "40",
+        }
+        res  = SESSION.get("https://opendart.fss.or.kr/api/list.json", params=params, timeout=30)
+        data = res.json()
+
+        status = data.get("status")
+        if status == "013":   # 데이터 없음 (마지막 페이지 이후)
+            break
+        if status != "000":
+            print(f"  [WARN] list.json page={page} status={status}: {data.get('message','')}")
+            break
+
+        items = data.get("list", [])
+        all_items.extend(items)
+        print(f"  page {page}: {len(items)}건 (누계 {len(all_items)}건)")
+
+        total_page = int(data.get("total_page", 1))
+        if page >= total_page:
+            break
+
+    return all_items
 
 
-# ── Step 3: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
+def latest_per_corp(items: list[dict]) -> dict[str, dict]:
+    """종목별 최신 공시 1건만 추출 (corp_name → filing)"""
+    by_corp: dict[str, dict] = {}
+    for item in items:
+        name = item.get("corp_name", "").strip()
+        if not name:
+            continue
+        existing = by_corp.get(name)
+        if existing is None or item.get("rcept_dt", "") > existing.get("rcept_dt", ""):
+            by_corp[name] = item
+    return by_corp
+
+
+# ── Step 2: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
+def parse_viewer_params(html: str):
+    text_m = re.search(
+        r"(node\w+)\[.text.\]\s*=\s*[\"'][^\"']*보유비율[^\"']*[\"']",
+        html
+    )
+    if not text_m:
+        return None
+
+    var_name  = text_m.group(1)
+    start_pos = text_m.start()
+    section   = html[start_pos : start_pos + 800]
+
+    params = {}
+    for key in ("dcmNo", "eleId", "offset", "length", "dtd"):
+        m = re.search(
+            rf"{re.escape(var_name)}\[.{key}.\]\s*=\s*[\"']([^\"']+)[\"']",
+            section
+        )
+        if m:
+            params[key] = m.group(1)
+
+    return params if len(params) >= 5 else None
+
+
 def extract_ratio(text: str):
-    """HTML 테이블에서 보유비율 추출 — '이번보고서' 국민연금 행 우선, 날짜 오탐 방지"""
     soup = BeautifulSoup(text, "html.parser")
 
-    # ① 국민연금 행에서 직접 비율 추출 (viewer section은 이미 보유비율 섹션만 포함)
-    #    이번보고서 행 우선, 없으면 국민연금 포함 행 중 마지막
+    # ① 국민연금 행에서 직접 추출
     best_ratio = None
     for row in soup.find_all("tr"):
         row_text = row.get_text()
@@ -147,19 +136,17 @@ def extract_ratio(text: str):
                 pass
         if row_ratios:
             if "이번보고서" in row_text:
-                return row_ratios[0]   # 이번보고서 행 발견 시 즉시 반환
-            best_ratio = row_ratios[0]  # fallback: 마지막 국민연금 행
+                return row_ratios[0]
+            best_ratio = row_ratios[0]
 
     if best_ratio is not None:
         return best_ratio
 
-    # ② 테이블 셀에서 "보유비율" 또는 "지분율" 텍스트를 찾고 인접 셀 값 파싱
-    keywords = ("보유비율", "보유 비율", "지분율", "보유주식비율")
+    # ② 보유비율/지분율 인접 셀
     for cell in soup.find_all(["td", "th"]):
         cell_txt = cell.get_text(strip=True).replace(" ", "")
-        if any(kw.replace(" ", "") in cell_txt for kw in keywords):
-            for sibling in [cell.find_next_sibling("td"),
-                            cell.find_next("td")]:
+        if any(kw in cell_txt for kw in ("보유비율", "보유 비율", "지분율", "보유주식비율")):
+            for sibling in [cell.find_next_sibling("td"), cell.find_next("td")]:
                 if sibling is None:
                     continue
                 raw = sibling.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "").strip()
@@ -174,7 +161,7 @@ def extract_ratio(text: str):
                         if 5.0 <= v <= 25.0:
                             return v
 
-    # ③ XML 태그 형태 (XBRL)
+    # ③ XBRL 태그
     for tag in ("holdRto", "bndtRto", "posesnStockRto"):
         m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
         if m:
@@ -182,61 +169,24 @@ def extract_ratio(text: str):
             if 5.0 <= v <= 25.0:
                 return v
 
-    # ④ "보유비율" 뒤에 바로 % 붙은 패턴 — 날짜 오탐 방지 위해 % 필수
+    # ④ 보유비율 + % 패턴
     m = re.search(r"보유\s*비율[^0-9<]{0,60}([0-9]+\.[0-9]{1,4})\s*(?:%|％)", text)
     if m:
         v = float(m.group(1))
         if 5.0 <= v <= 25.0:
             return v
 
-    return None  # 날짜 오탐 방지: catch-all 패턴 제거
-
-
-def parse_viewer_params(html: str, corp_name: str = ""):
-    """dsaf001/main.do HTML의 JS에서 '보유비율' 섹션 viewer 파라미터 추출"""
-    # JS 구조: nodeX['text'] = "... 보유비율 ..."; nodeX['dcmNo'] = "..."; ...
-    # 단계 1: '보유비율' 텍스트가 있는 노드 변수명과 위치 찾기
-    text_m = re.search(
-        r"(node\w+)\[.text.\]\s*=\s*[\"'][^\"']*보유비율[^\"']*[\"']",
-        html
-    )
-    if not text_m:
-        return None
-
-    var_name  = text_m.group(1)
-    start_pos = text_m.start()
-    # 해당 노드 블록 (최대 800자) 추출
-    section   = html[start_pos : start_pos + 800]
-
-    # 단계 2: 각 파라미터를 개별 추출
-    params = {}
-    for key in ("dcmNo", "eleId", "offset", "length", "dtd"):
-        m = re.search(
-            rf"{re.escape(var_name)}\[.{key}.\]\s*=\s*[\"']([^\"']+)[\"']",
-            section
-        )
-        if m:
-            params[key] = m.group(1)
-
-    if len(params) < 5:
-        return None
-    return params
+    return None
 
 
 def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
-    """DART 공시에서 보유비율 추출:
-    dsaf001/main.do → JS 파라미터 파싱 → report/viewer.do 실제 섹션 HTML → 비율 추출
-    """
     try:
-        # 1) 메인 페이지 (JS에 viewer 파라미터 포함)
         main_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
         res      = SESSION.get(main_url, timeout=15)
-
-        params = parse_viewer_params(res.text, corp_name)
+        params   = parse_viewer_params(res.text)
         if not params:
             return None
 
-        # 2) 실제 '보유비율' 섹션 HTML 요청
         viewer_url = (
             f"https://dart.fss.or.kr/report/viewer.do"
             f"?rcpNo={rcept_no}"
@@ -247,11 +197,10 @@ def parse_ratio_from_viewer(rcept_no: str, corp_name: str):
             f"&dtd={params['dtd']}"
         )
         res2  = SESSION.get(viewer_url, timeout=15)
-        ratio = extract_ratio(res2.text)
-        return ratio
+        return extract_ratio(res2.text)
 
     except Exception as e:
-        print(f"    [WARN] 파싱 실패 {corp_name} ({rcept_no}): {e}")
+        print(f"    [WARN] 뷰어 파싱 실패 {corp_name} ({rcept_no}): {e}")
         return None
 
 
@@ -262,55 +211,40 @@ def fetch_all() -> list[dict]:
         return []
     print(f"  API 키: {'*'*8}{KEY[-4:]}")
 
-    try:
-        corp_map = enrich_corp_codes(DART_CORPS)
-    except Exception as e:
-        print(f"  [WARN] corpCode.xml 실패: {e} → 하드코딩 사용")
-        corp_map = dict(DART_CORPS)
+    print("\n  국민연금 D001 공시 전체 조회 (flr_nm=국민연금)...")
+    all_filings = fetch_nps_all_filings()
+    if not all_filings:
+        print("  [WARN] 공시 0건 — DART 서버 문제 또는 최근 공시 없음")
+        return []
 
-    print(f"\n  국민연금 D001 공시 조회 + 뷰어 파싱 ({len(corp_map)}종목, 병렬 처리)...")
+    by_corp = latest_per_corp(all_filings)
+    print(f"\n  종목별 최신 공시 {len(by_corp)}건 → 보유비율 파싱 시작...\n")
 
-    def fetch_one(corp_name: str, corp_code: str):
-        try:
-            filings = get_nps_filings(corp_code)
-            if not filings:
-                return None
-
-            latest   = filings[0]
-            rcept_no = latest.get("rcept_no", "")
-            rcept_dt = latest.get("rcept_dt", "")
-
-            ratio = parse_ratio_from_viewer(rcept_no, corp_name) if rcept_no else None
-            if ratio is None:
-                print(f"  - {corp_name:<22} 공시 있으나 비율 파싱 실패 ({rcept_no})")
-                return None
-
-            prev_ratio = ratio
-            if len(filings) >= 2:
-                prev_ratio = (
-                    parse_ratio_from_viewer(filings[1]["rcept_no"], corp_name) or ratio
-                )
-            change = round(ratio - prev_ratio, 2)
-            if len(rcept_dt) == 8:
-                rcept_dt = f"{rcept_dt[:4]}-{rcept_dt[4:6]}-{rcept_dt[6:]}"
-
-            print(f"  ✓ {corp_name:<22} {ratio:.2f}%  변동 {change:+.2f}%  ({rcept_dt})")
-            return {
-                "name":     corp_name,
-                "value":    round(ratio, 2),
-                "change":   change,
-                "amount":   f"지분율 {ratio:.2f}%",
-                "rcept_dt": rcept_dt,
-            }
-        except Exception as e:
-            print(f"  [ERROR] {corp_name}: {e}")
+    def fetch_one(corp_name: str, filing: dict):
+        rcept_no = filing.get("rcept_no", "")
+        rcept_dt = filing.get("rcept_dt", "")
+        if not rcept_no:
             return None
+        ratio = parse_ratio_from_viewer(rcept_no, corp_name)
+        if ratio is None:
+            print(f"  - {corp_name:<22} 비율 파싱 실패")
+            return None
+        if len(rcept_dt) == 8:
+            rcept_dt = f"{rcept_dt[:4]}-{rcept_dt[4:6]}-{rcept_dt[6:]}"
+        print(f"  ✓ {corp_name:<22} {ratio:.2f}%  ({rcept_dt})")
+        return {
+            "name":     corp_name,
+            "value":    round(ratio, 2),
+            "change":   0,
+            "amount":   f"지분율 {ratio:.2f}%",
+            "rcept_dt": rcept_dt,
+        }
 
     stocks = []
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(fetch_one, name, code): name
-            for name, code in corp_map.items()
+            executor.submit(fetch_one, name, filing): name
+            for name, filing in by_corp.items()
         }
         for future in as_completed(futures):
             result = future.result()
@@ -330,26 +264,44 @@ def main():
 
     now_kst    = datetime.now(KST)
     updated_at = now_kst.strftime("%Y-%m-%d %H:%M KST")
-    stocks     = fetch_all()
+
+    stocks = fetch_all()
 
     if stocks:
-        source = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
+        source     = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
+        payload    = {"updated_at": updated_at, "source": source, "stocks": stocks}
     else:
-        print("\n  ⚠ 수집 실패 — 빈 목록으로 저장 (fallback 없음)")
-        source     = "수집 실패 — DART 공시 데이터 없음"
-        updated_at += " [error]"
+        # DART 장애 시: 이전 데이터 유지
+        if OUTPUT_PATH.exists():
+            try:
+                with open(OUTPUT_PATH, encoding="utf-8") as f:
+                    old = json.load(f)
+                if old.get("stocks"):
+                    print("\n  ⚠ 수집 실패 — 이전 데이터 유지")
+                    old["updated_at"] += " (DART 장애 — 이전 데이터)"
+                    payload = old
+                    OUTPUT_PATH.write_text(
+                        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+                    )
+                    print(f"\n{'='*55}")
+                    print(f"  ✅ 이전 데이터 유지: {len(old['stocks'])}종목")
+                    print("=" * 55)
+                    return
+            except Exception:
+                pass
+        print("\n  ⚠ 수집 실패 + 이전 데이터 없음 — 빈 목록 저장")
+        payload = {
+            "updated_at": updated_at + " [error]",
+            "source":     "수집 실패 — DART 공시 데이터 없음",
+            "stocks":     [],
+        }
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump({
-            "updated_at": updated_at,
-            "source":     source,
-            "stocks":     stocks,   # 실패 시 빈 배열
-        }, f, ensure_ascii=False, indent=2)
+    OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"\n{'='*55}")
     print(f"  ✅ 완료: {len(stocks)}종목 | {updated_at}")
-    print(f"  출처: {source}")
+    print(f"  출처: {payload['source']}")
     print("=" * 55)
 
 
