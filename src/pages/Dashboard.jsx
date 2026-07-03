@@ -398,6 +398,52 @@ function InfoBox({ children }) {
   )
 }
 
+/** 반원 게이지 — 바늘 + 그라데이션 색상 밴드 */
+function GaugeMeter({ value, uid = 'gauge' }) {
+  const C = useC()
+  if (value == null) return null
+  const status = getFngStatus(C, value)
+  const gc = status.color
+  // arc: center (60,65), r=50, from (10,65) to (110,65) going UP
+  // angle: 0 → left(fear), 100 → right(greed)
+  const theta = Math.PI * (1 - value / 100)
+  const nx = (60 + 42 * Math.cos(theta)).toFixed(1)
+  const ny = (65 - 42 * Math.sin(theta)).toFixed(1)
+
+  return (
+    <svg width="120" height="72" viewBox="0 0 120 72">
+      <defs>
+        <linearGradient id={`${uid}BandGrad`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor={C.red}    stopOpacity="0.7" />
+          <stop offset="25%"  stopColor={C.orange} stopOpacity="0.7" />
+          <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} stopOpacity="0.7" />
+          <stop offset="75%"  stopColor="#65a30d"  stopOpacity="0.7" />
+          <stop offset="100%" stopColor={C.green}  stopOpacity="0.7" />
+        </linearGradient>
+      </defs>
+      {/* 배경 트랙 */}
+      <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none"
+        stroke={C.border} strokeWidth="11" strokeLinecap="round" />
+      {/* 색상 밴드 (항상 전체 표시, 배경으로) */}
+      <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none"
+        stroke={`url(#${uid}BandGrad)`} strokeWidth="11" strokeLinecap="round" opacity="0.4" />
+      {/* 진행 아크 (0 → 현재값) */}
+      <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none"
+        stroke={gc} strokeWidth="11" strokeLinecap="round"
+        strokeDasharray={`${(value / 100) * 157} 157`} />
+      {/* 바늘 */}
+      <line x1="60" y1="65" x2={nx} y2={ny}
+        stroke={C.panel} strokeWidth="2.5" strokeLinecap="round" />
+      {/* 중심 점 */}
+      <circle cx="60" cy="65" r="5" fill={gc} />
+      <circle cx="60" cy="65" r="2.5" fill={C.panel} />
+      {/* 구간 레이블 */}
+      <text x="13" y="72" fontSize="7" fill={C.red}    fontFamily="monospace">공포</text>
+      <text x="90" y="72" fontSize="7" fill={C.green}  fontFamily="monospace">탐욕</text>
+    </svg>
+  )
+}
+
 // ═══════════════════════════════════════════════════
 // 위젯 ①-A: 주식 공포탐욕지수 (실시간 — CNN Markets)
 // ═══════════════════════════════════════════════════
@@ -439,24 +485,8 @@ function CnnFngWidget() {
                 → {status?.action}
               </span>
             </div>
-            {/* 아크 게이지 */}
-            <svg width="120" height="72" viewBox="0 0 120 72">
-              <defs>
-                <linearGradient id="cnnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stopColor={C.red} />
-                  <stop offset="30%"  stopColor={C.orange} />
-                  <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} />
-                  <stop offset="70%"  stopColor="#65a30d" />
-                  <stop offset="100%" stopColor={C.green} />
-                </linearGradient>
-              </defs>
-              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke={C.border} strokeWidth="8" strokeLinecap="round" />
-              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#cnnGrad)"
-                strokeWidth="8" strokeLinecap="round"
-                strokeDasharray={`${(val / 100) * 157} 157`} />
-              <text x="60" y="60" textAnchor="middle" fontSize="12" fontFamily="monospace"
-                fontWeight="bold" fill={gc}>{val}</text>
-            </svg>
+            {/* 반원 게이지 */}
+            <GaugeMeter value={val} uid="cnn" />
             {/* 과거 비교 */}
             <div className="space-y-1 text-[10px]">
               {[
@@ -580,24 +610,8 @@ function FearAndGreedWidget() {
                 → {status?.action}
               </span>
             </div>
-            {/* 아크 게이지 */}
-            <svg width="120" height="72" viewBox="0 0 120 72">
-              <defs>
-                <linearGradient id="fngGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stopColor={C.red} />
-                  <stop offset="30%"  stopColor={C.orange} />
-                  <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} />
-                  <stop offset="70%"  stopColor="#65a30d" />
-                  <stop offset="100%" stopColor={C.green} />
-                </linearGradient>
-              </defs>
-              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke={C.border} strokeWidth="8" strokeLinecap="round" />
-              <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#fngGrad)"
-                strokeWidth="8" strokeLinecap="round"
-                strokeDasharray={`${(val / 100) * 157} 157`} />
-              <text x="60" y="60" textAnchor="middle" fontSize="12" fontFamily="monospace"
-                fontWeight="bold" fill={gc}>{val}</text>
-            </svg>
+            {/* 반원 게이지 */}
+            <GaugeMeter value={val} uid="fng" />
             {/* 구간 범례 */}
             <div className="space-y-1 text-[9px]">
               {[
@@ -681,7 +695,18 @@ function UsdKrwWidget() {
             <div className="flex items-end gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>USD / KRW</p>
-                <p className="text-3xl font-bold" style={{ color: sc }}>₩ {fmtNum(data.krw, 1)}</p>
+                <div className="flex items-end gap-2">
+                  <p className="text-3xl font-bold" style={{ color: sc }}>₩ {fmtNum(data.krw, 1)}</p>
+                  {mkt?.usdkrw?.change != null && (() => {
+                    const chg = mkt.usdkrw.change
+                    const up  = chg > 0
+                    return (
+                      <p className="text-sm font-semibold mb-1" style={{ color: up ? '#ef4444' : '#3b82f6' }}>
+                        {up ? '▲' : '▼'} {Math.abs(chg).toFixed(1)}원
+                      </p>
+                    )
+                  })()}
+                </div>
               </div>
               {isDanger && (
                 <div className="mb-1 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded"
@@ -1089,6 +1114,12 @@ function NpsWidget() {
           </div>
         )
       )}
+      {/* Last Updated */}
+      {data?.updated_at && (
+        <p className="text-[9px] mt-3 text-right" style={{ color: C.border }}>
+          🕐 Last Updated: {data.updated_at}
+        </p>
+      )}
     </Widget>
   )
 }
@@ -1134,10 +1165,10 @@ function FedWidget() {
   })()
 
   const rates = [
-    { label: '미 국채 10Y', key: 'us10y', value: tnx?.latest,   pct: tnx?.change_pct,   color: C.accent,  flag: '🇺🇸' },
-    { label: '미 국채 3M',  key: 'us3m',  value: us3m?.latest,  pct: us3m?.change_pct,  color: C.purple,  flag: '🇺🇸' },
-    { label: '한국 국채 10Y',key: 'kr10y',value: kr10y?.latest, pct: kr10y?.change_pct, color: C.orange,  flag: '🇰🇷' },
-    { label: '한국 국채 3Y', key: 'kr3y', value: kr3y?.latest,  pct: kr3y?.change_pct,  color: C.yellow,  flag: '🇰🇷' },
+    { label: '미 국채 10Y',  key: 'us10y', value: tnx?.latest,   abs: tnx?.change,   color: C.accent,  flag: '🇺🇸' },
+    { label: '미 국채 3M',   key: 'us3m',  value: us3m?.latest,  abs: us3m?.change,  color: C.purple,  flag: '🇺🇸' },
+    { label: '한국 국채 10Y',key: 'kr10y', value: kr10y?.latest, abs: kr10y?.change, color: C.orange,  flag: '🇰🇷' },
+    { label: '한국 국채 3Y', key: 'kr3y',  value: kr3y?.latest,  abs: kr3y?.change,  color: C.yellow,  flag: '🇰🇷' },
   ]
 
   return (
@@ -1159,17 +1190,19 @@ function FedWidget() {
           {/* 금리 4개 수치 그리드 */}
           <div className="grid grid-cols-2 gap-2 mb-3">
             {rates.map(r => {
-              const up = (r.pct ?? 0) > 0
+              const up = (r.abs ?? 0) > 0
+              // 금리는 상승=적색(채권값↓, 주식에 악재), 하락=청색
+              const arrowColor = up ? '#ef4444' : '#3b82f6'
               return (
                 <div key={r.key} className="rounded p-2" style={{ background: C.header, border: `1px solid ${C.border}` }}>
                   <p className="text-[10px] mb-0.5" style={{ color: C.muted }}>{r.flag} {r.label}</p>
-                  <div className="flex items-end gap-1.5">
+                  <div className="flex items-end gap-1.5 flex-wrap">
                     <p className="text-lg font-bold" style={{ color: r.value != null ? r.color : C.muted }}>
                       {r.value != null ? `${r.value.toFixed(2)}%` : '—'}
                     </p>
-                    {r.pct != null && (
-                      <p className="text-[10px] mb-0.5 font-semibold" style={{ color: up ? C.red : C.green }}>
-                        {up ? '▲' : '▼'} {Math.abs(r.pct).toFixed(2)}%
+                    {r.abs != null && (
+                      <p className="text-[10px] mb-0.5 font-semibold" style={{ color: arrowColor }}>
+                        {up ? '▲' : '▼'} {Math.abs(r.abs).toFixed(3)}%p
                       </p>
                     )}
                   </div>
@@ -1192,8 +1225,12 @@ function FedWidget() {
             <div className="flex-1 rounded px-3 py-1.5 text-[10px]"
               style={{ background: C.border + '50', border: `1px solid ${C.border}` }}>
               <span style={{ color: C.muted }}>DXY </span>
-              <span className="font-semibold" style={{ color: dxyUp ? C.red : C.green }}>
-                {dxy?.latest?.toFixed(2) ?? '—'} {dxyUp ? '▲ 강달러' : '▼ 약달러'}
+              <span className="font-semibold" style={{ color: dxyUp ? '#ef4444' : '#3b82f6' }}>
+                {dxy?.latest?.toFixed(2) ?? '—'}
+                {dxy?.change != null && (
+                  <span> {dxyUp ? '▲' : '▼'} {Math.abs(dxy.change).toFixed(2)}</span>
+                )}
+                <span style={{ color: C.muted }}> {dxyUp ? '(강달러)' : '(약달러)'}</span>
               </span>
             </div>
           </div>
@@ -1616,26 +1653,8 @@ function KrFngWidget() {
                 → {status?.action}
               </span>
             </div>
-            {/* 아크 게이지 */}
-            {val !== null && (
-              <svg width="120" height="72" viewBox="0 0 120 72">
-                <defs>
-                  <linearGradient id="krFngGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%"   stopColor={C.red} />
-                    <stop offset="30%"  stopColor={C.orange} />
-                    <stop offset="50%"  stopColor={C.isDark ? C.yellow : '#eab308'} />
-                    <stop offset="70%"  stopColor="#65a30d" />
-                    <stop offset="100%" stopColor={C.green} />
-                  </linearGradient>
-                </defs>
-                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke={C.border} strokeWidth="8" strokeLinecap="round" />
-                <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="url(#krFngGrad)"
-                  strokeWidth="8" strokeLinecap="round"
-                  strokeDasharray={`${(val / 100) * 157} 157`} />
-                <text x="60" y="60" textAnchor="middle" fontSize="12" fontFamily="monospace"
-                  fontWeight="bold" fill={gc}>{val}</text>
-              </svg>
-            )}
+            {/* 반원 게이지 */}
+            {val !== null && <GaugeMeter value={val} uid="krfng" />}
             {/* 구간 범례 */}
             <div className="space-y-1 text-[9px]">
               {[
@@ -1739,9 +1758,17 @@ function Sidebar() {
     try { const s = localStorage.getItem('hemstock_checklist'); return s ? JSON.parse(s) : DEFAULT_CHECKLIST }
     catch { return DEFAULT_CHECKLIST }
   })
-  const [journal, setJournal] = useState(() => {
-    try { return localStorage.getItem('hemstock_journal') || '' } catch { return '' }
+  const [journalLog, setJournalLog] = useState(() => {
+    try {
+      const s = localStorage.getItem('hemstock_journal_log')
+      if (s) return JSON.parse(s)
+      // 구 버전 텍스트 메모 마이그레이션
+      const old = localStorage.getItem('hemstock_journal')
+      if (old?.trim()) return [{ id: Date.now(), date: new Date().toISOString().slice(0, 10), text: old.trim() }]
+      return []
+    } catch { return [] }
   })
+  const [journalInput, setJournalInput] = useState('')
   const [traded, setTraded] = useState(() => {
     try {
       const s = JSON.parse(localStorage.getItem('hemstock_traded') || 'null')
@@ -1758,7 +1785,19 @@ function Sidebar() {
     saveChecklist([...checklist, { id: `c${Date.now()}`, text: newItem.trim(), checked: false }])
     setNewItem('')
   }
-  const saveJournal  = (v) => { setJournal(v); localStorage.setItem('hemstock_journal', v) }
+  const addJournalEntry = () => {
+    if (!journalInput.trim()) return
+    const entry = { id: Date.now(), date: new Date().toISOString().slice(0, 10), text: journalInput.trim() }
+    const next  = [entry, ...journalLog]
+    setJournalLog(next)
+    localStorage.setItem('hemstock_journal_log', JSON.stringify(next))
+    setJournalInput('')
+  }
+  const removeJournalEntry = (id) => {
+    const next = journalLog.filter(e => e.id !== id)
+    setJournalLog(next)
+    localStorage.setItem('hemstock_journal_log', JSON.stringify(next))
+  }
   const setTradedVal = (v) => { setTraded(v); localStorage.setItem('hemstock_traded', JSON.stringify({ date: new Date().toDateString(), value: v })) }
 
   const checked = checklist.filter(c => c.checked).length
@@ -1853,15 +1892,54 @@ function Sidebar() {
           </div>
         </div>
 
-        {/* 매매 메모 */}
+        {/* 트레이딩 저널 (누적 로그) */}
         <div>
-          <p className="text-[10px] uppercase tracking-widest font-semibold mb-2" style={{ color: C.muted }}>오늘 매매 메모</p>
-          <textarea value={journal} onChange={e => saveJournal(e.target.value)}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: C.muted }}>트레이딩 저널</p>
+            {journalLog.length > 0 && (
+              <span className="text-[9px]" style={{ color: C.border }}>{journalLog.length}건</span>
+            )}
+          </div>
+          {/* 입력 영역 */}
+          <textarea
+            value={journalInput}
+            onChange={e => setJournalInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) addJournalEntry() }}
             placeholder="오늘의 판단 근거, 반성, 배운 점..."
-            rows={8}
+            rows={3}
             className="w-full rounded px-3 py-2 text-[11px] leading-relaxed outline-none resize-none placeholder:text-[#9ca3af]"
             style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
-          <p className="text-[9px] mt-1" style={{ color: C.muted }}>자동 저장 (LocalStorage)</p>
+          <button onClick={addJournalEntry}
+            className="w-full mt-1 py-1.5 rounded text-[11px] font-semibold transition-all"
+            style={{ background: C.accent + '20', color: C.accent, border: `1px solid ${C.accent}40` }}
+            onMouseEnter={e => { e.currentTarget.style.background = C.accent + '35' }}
+            onMouseLeave={e => { e.currentTarget.style.background = C.accent + '20' }}>
+            기록하기 ↵ (Ctrl+Enter)
+          </button>
+          {/* 로그 목록 */}
+          {journalLog.length > 0 && (
+            <div className="mt-3 space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
+              {journalLog.map(entry => (
+                <div key={entry.id} className="group rounded px-2.5 py-1.5 text-[10px] leading-snug"
+                  style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+                  <div className="flex items-start justify-between gap-1">
+                    <span className="shrink-0 font-semibold" style={{ color: C.accent }}>[{entry.date}]</span>
+                    <button onClick={() => removeJournalEntry(entry.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"
+                      style={{ color: C.muted }}>
+                      <X size={9} />
+                    </button>
+                  </div>
+                  <p className="mt-0.5 whitespace-pre-wrap" style={{ color: C.text }}>{entry.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {journalLog.length === 0 && (
+            <p className="text-[9px] mt-2 text-center" style={{ color: C.border }}>
+              기록하기 버튼으로 로그를 누적할 수 있어요
+            </p>
+          )}
         </div>
       </div>
     </aside>
@@ -2027,7 +2105,9 @@ export default function Dashboard() {
               <div className="col-span-1 sm:col-span-2">
                 <BitcoinWidget />
               </div>
-              <GoldWidget />
+              <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+                <GoldWidget />
+              </div>
 
               {/* ── 섹션 2: 주요 지수 (GitHub Actions) ── */}
               <SectionHeader flag="📈" title="주요 지수"
