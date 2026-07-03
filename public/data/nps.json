@@ -1,5 +1,70 @@
 {
-  "updated_at": "2026-07-03 21:18 KST [error]",
-  "source": "수집 실패 — DART 공시 데이터 없음",
-  "stocks": []
+  "updated_at": "2026-07-03 21:26 KST",
+  "source": "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱",
+  "stocks": [
+    {
+      "name": "코스메카코리아",
+      "value": 12.98,
+      "change": 0,
+      "amount": "지분율 12.98%",
+      "rcept_dt": "2026-07-01",
+      "rank": 1
+    },
+    {
+      "name": "RF머트리얼즈",
+      "value": 7.48,
+      "change": 0,
+      "amount": "지분율 7.48%",
+      "rcept_dt": "2026-07-01",
+      "rank": 2
+    },
+    {
+      "name": "피에스케이",
+      "value": 7.12,
+      "change": 0,
+      "amount": "지분율 7.12%",
+      "rcept_dt": "2026-07-01",
+      "rank": 3
+    },
+    {
+      "name": "동국제강",
+      "value": 6.13,
+      "change": 0,
+      "amount": "지분율 6.13%",
+      "rcept_dt": "2026-07-01",
+      "rank": 4
+    },
+    {
+      "name": "알지노믹스",
+      "value": 5.04,
+      "change": 0,
+      "amount": "지분율 5.04%",
+      "rcept_dt": "2026-07-01",
+      "rank": 5
+    },
+    {
+      "name": "씨엠티엑스",
+      "value": 5.03,
+      "change": 0,
+      "amount": "지분율 5.03%",
+      "rcept_dt": "2026-07-01",
+      "rank": 6
+    },
+    {
+      "name": "솔브레인",
+      "value": 5.02,
+      "change": 0,
+      "amount": "지분율 5.02%",
+      "rcept_dt": "2026-07-01",
+      "rank": 7
+    },
+    {
+      "name": "파인엠텍",
+      "value": 5.0,
+      "change": 0,
+      "amount": "지분율 5.00%",
+      "rcept_dt": "2026-07-01",
+      "rank": 8
+    }
+  ]
 }
