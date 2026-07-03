@@ -1037,13 +1037,16 @@ function NpsWidget() {
       ) : (
         /* ── 변동 탭 ── */
         changes.length === 0 ? (
-          <p className="text-xs text-center py-8" style={{ color: C.muted }}>
-            오늘 변동 공시 없음
-          </p>
+          <div className="py-8 text-center space-y-1">
+            <p className="text-xs" style={{ color: C.muted }}>최근 수집 시 신규 변동 공시 없음</p>
+            <p className="text-[10px]" style={{ color: C.border }}>
+              D001은 변동 후 5영업일 이내 보고 의무 — 당일 거래가 즉시 반영되지 않습니다
+            </p>
+          </div>
         ) : (
           <div className="overflow-auto">
             <p className="text-[10px] mb-2" style={{ color: C.muted }}>
-              오늘 국민연금공단이 제출한 D001 공시 기준 (주식대량보유상황보고)
+              최근 수집 시 국민연금공단이 새로 제출한 D001 공시 (변동 후 최대 5영업일 내 보고)
             </p>
             <table className="w-full text-xs">
               <thead>
