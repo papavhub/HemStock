@@ -1038,21 +1038,21 @@ function NpsWidget() {
         /* ── 변동 탭 ── */
         changes.length === 0 ? (
           <div className="py-8 text-center space-y-1">
-            <p className="text-xs" style={{ color: C.muted }}>최근 수집 시 신규 변동 공시 없음</p>
+            <p className="text-xs" style={{ color: C.muted }}>변동 공시 이력 없음</p>
             <p className="text-[10px]" style={{ color: C.border }}>
-              D001은 변동 후 5영업일 이내 보고 의무 — 당일 거래가 즉시 반영되지 않습니다
+              D001은 지분 1% 이상 변동 후 5영업일 이내 보고 의무 — 당일 거래가 즉시 반영되지 않습니다
             </p>
           </div>
         ) : (
           <div className="overflow-auto">
             <p className="text-[10px] mb-2" style={{ color: C.muted }}>
-              최근 수집 시 국민연금공단이 새로 제출한 D001 공시 (변동 후 최대 5영업일 내 보고)
+              국민연금공단 D001 공시 변동 이력 (90일) — 변동 후 최대 5영업일 내 보고
             </p>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b" style={{ borderColor: C.border }}>
-                  {['종목','이번 비율','이전 비율','변동','공시일'].map(h => (
-                    <th key={h} className={`pb-2 font-normal ${h==='종목'?'text-left':'text-right'}`}
+                  {['공시일','종목','이전 비율','이번 비율','변동'].map(h => (
+                    <th key={h} className={`pb-2 font-normal ${h==='종목'||h==='공시일'?'text-left':'text-right'}`}
                       style={{ color: C.muted }}>{h}</th>
                   ))}
                 </tr>
@@ -1067,19 +1067,19 @@ function NpsWidget() {
                       style={{ borderColor: C.border + '50' }}
                       onMouseEnter={e => e.currentTarget.style.background = C.border + '30'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td className="py-2" style={{ color: C.muted, minWidth: '4.5rem' }}>
+                        {c.rcept_dt ?? '—'}
+                      </td>
                       <td className="py-2 font-medium" style={{ color: C.text }}>
                         {isNew && <span className="mr-1 text-[9px] px-1 rounded" style={{ background: C.accent + '25', color: C.accent }}>신규</span>}
                         {c.name}
                       </td>
-                      <td className="py-2 text-right font-semibold" style={{ color: C.accent }}>{c.value?.toFixed(2)}%</td>
                       <td className="py-2 text-right" style={{ color: C.muted }}>
                         {c.prev != null ? `${c.prev.toFixed(2)}%` : '—'}
                       </td>
+                      <td className="py-2 text-right font-semibold" style={{ color: C.accent }}>{c.value?.toFixed(2)}%</td>
                       <td className="py-2 text-right font-semibold" style={{ color: cc }}>
                         {isNew ? '신규' : `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`}
-                      </td>
-                      <td className="py-2 text-right" style={{ color: C.muted }}>
-                        {c.rcept_dt ? c.rcept_dt.slice(5) : '—'}
                       </td>
                     </tr>
                   )

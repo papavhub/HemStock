@@ -264,10 +264,10 @@ def fetch_all() -> list[dict]:
     return today_filings
 
 
-def merge_portfolio(existing: list[dict], today: list[dict]) -> tuple[list[dict], list[dict]]:
-    """기존 누적 포트폴리오와 오늘 공시를 합산, 변동 목록도 반환"""
-    portfolio = {s["name"]: s for s in existing}
-    changes   = []
+def merge_portfolio(existing: list[dict], history: list[dict], today: list[dict]) -> tuple[list[dict], list[dict]]:
+    """기존 누적 포트폴리오와 오늘 공시를 합산, 변동 히스토리도 누적"""
+    portfolio    = {s["name"]: s for s in existing}
+    new_entries  = []
 
     for f in today:
         name      = f["name"]
@@ -276,14 +276,17 @@ def merge_portfolio(existing: list[dict], today: list[dict]) -> tuple[list[dict]
         old_ratio = old["value"] if old else None
         change    = round(new_ratio - old_ratio, 2) if old_ratio is not None else None
 
-        changes.append({
-            "name":     name,
-            "value":    new_ratio,
-            "prev":     old_ratio,
-            "change":   change,
-            "rcept_dt": f["rcept_dt"],
-            "is_new":   old_ratio is None,
-        })
+        # 동일 rcept_dt + 동일 종목은 중복 추가 안 함
+        already = any(h["name"] == name and h["rcept_dt"] == f["rcept_dt"] for h in history)
+        if not already:
+            new_entries.append({
+                "name":     name,
+                "value":    new_ratio,
+                "prev":     old_ratio,
+                "change":   change,
+                "rcept_dt": f["rcept_dt"],
+                "is_new":   old_ratio is None,
+            })
 
         portfolio[name] = {
             "name":     name,
@@ -293,12 +296,17 @@ def merge_portfolio(existing: list[dict], today: list[dict]) -> tuple[list[dict]
             "rcept_dt": f["rcept_dt"],
         }
 
+    # 최신 항목을 앞에, 최대 90일치 유지
+    merged_history = new_entries + history
+    cutoff = (datetime.now(KST) - timedelta(days=90)).strftime("%Y-%m-%d")
+    merged_history = [h for h in merged_history if (h.get("rcept_dt") or "") >= cutoff]
+    merged_history.sort(key=lambda x: x.get("rcept_dt", ""), reverse=True)
+
     stocks = sorted(portfolio.values(), key=lambda x: x["value"], reverse=True)
     for i, s in enumerate(stocks, 1):
         s["rank"] = i
 
-    changes.sort(key=lambda x: abs(x["change"] or 0), reverse=True)
-    return stocks, changes
+    return stocks, merged_history
 
 
 def main():
@@ -324,8 +332,8 @@ def main():
     today_filings = fetch_all()
 
     if today_filings:
-        stocks, changes = merge_portfolio(existing_stocks, today_filings)
-        print(f"\n  포트폴리오: {len(stocks)}종목 (오늘 변동: {len(changes)}건)")
+        stocks, changes = merge_portfolio(existing_stocks, existing_changes, today_filings)
+        print(f"\n  포트폴리오: {len(stocks)}종목 (누적 변동 히스토리: {len(changes)}건)")
         payload = {
             "updated_at": updated_at,
             "source":     source,
@@ -333,14 +341,14 @@ def main():
             "changes":    changes,
         }
     else:
-        # DART 장애 시: 이전 데이터 유지, changes만 비움
+        # DART 장애 또는 당일 공시 없음: 이전 데이터 유지 (변동 히스토리도 유지)
         if existing_stocks:
-            print("\n  ⚠ 오늘 공시 없음 — 기존 포트폴리오 유지")
+            print("\n  ⚠ 오늘 공시 없음 — 기존 포트폴리오 및 변동 히스토리 유지")
             payload = {
-                "updated_at": updated_at + " (공시 없음 — 이전 포트폴리오 유지)",
+                "updated_at": updated_at + " (공시 없음 — 이전 데이터 유지)",
                 "source":     source,
                 "stocks":     existing_stocks,
-                "changes":    [],
+                "changes":    existing_changes,
             }
         else:
             print("\n  ⚠ 수집 실패 + 이전 데이터 없음 — 빈 목록 저장")

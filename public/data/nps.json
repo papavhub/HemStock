@@ -66,5 +66,71 @@
       "rcept_dt": "2026-07-01",
       "rank": 8
     }
+  ],
+  "changes": [
+    {
+      "name": "코스메카코리아",
+      "value": 12.98,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "RF머트리얼즈",
+      "value": 7.48,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "피에스케이",
+      "value": 7.12,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "동국제강",
+      "value": 6.13,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "알지노믹스",
+      "value": 5.04,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "씨엠티엑스",
+      "value": 5.03,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "솔브레인",
+      "value": 5.02,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    },
+    {
+      "name": "파인엠텍",
+      "value": 5.0,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-01",
+      "is_new": true
+    }
   ]
 }
