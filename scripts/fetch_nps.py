@@ -43,7 +43,7 @@ def fetch_nps_all_filings() -> list[dict]:
     """DART list.json에서 국민연금이 제출한 D001 공시 전체 수집 (최근 1년, 최대 5페이지)"""
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
-    bgn_de = (now - timedelta(days=365)).strftime("%Y%m%d")
+    bgn_de = (now - timedelta(days=90)).strftime("%Y%m%d")
 
     all_items = []
     for page in range(1, 6):
