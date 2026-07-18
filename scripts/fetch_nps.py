@@ -48,8 +48,8 @@ def fetch_nps_all_filings() -> list[dict]:
     for page in range(1, 6):
         params = {
             "crtfc_key":        KEY,
-            "pblntf_detail_ty": "D001",
-            "flr_nm":           "국민연금공단",   # 정확한 제출인명으로 필터
+            "pblntf_detail_ty": "D002",   # 임원ㆍ주요주주특정증권등소유상황보고서 (국민연금 실제 사용 유형)
+            "flr_nm":           "국민연금공단",
             "bgn_de":           bgn_de,
             "end_de":           end_de,
             "page_no":          str(page),
@@ -93,8 +93,9 @@ def latest_per_corp(items: list[dict]) -> dict[str, dict]:
 
 # ── Step 2: DART 뷰어 HTML → 보유비율 추출 ──────────────────────
 def parse_viewer_params(html: str):
+    # D001: "보유비율" 섹션 / D002: "특정증권등의 소유상황" 섹션 매칭
     text_m = re.search(
-        r"(node\w+)\[.text.\]\s*=\s*[\"'][^\"']*보유비율[^\"']*[\"']",
+        r"(node\w+)\[.text.\]\s*=\s*[\"'][^\"']*(?:보유비율|특정증권등의\s*소유상황)[^\"']*[\"']",
         html
     )
     if not text_m:
@@ -129,7 +130,7 @@ def extract_ratio(text: str):
             raw = td.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "")
             try:
                 v = float(raw)
-                if 5.0 <= v <= 25.0:
+                if 3.0 <= v <= 35.0:
                     return v
             except ValueError:
                 pass
@@ -145,7 +146,7 @@ def extract_ratio(text: str):
             raw = td.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "")
             try:
                 v = float(raw)
-                if 5.0 <= v <= 25.0:
+                if 3.0 <= v <= 35.0:
                     best_ratio = v
             except ValueError:
                 pass
@@ -163,13 +164,13 @@ def extract_ratio(text: str):
                 raw = sibling.get_text(strip=True).replace(",", "").replace("%", "").replace("％", "").strip()
                 try:
                     v = float(raw)
-                    if 5.0 <= v <= 25.0:
+                    if 3.0 <= v <= 35.0:
                         return v
                 except ValueError:
                     m = re.search(r"([0-9]+\.[0-9]{1,4})", raw)
                     if m:
                         v = float(m.group(1))
-                        if 5.0 <= v <= 25.0:
+                        if 3.0 <= v <= 35.0:
                             return v
 
     # ③ XBRL 태그
@@ -177,14 +178,14 @@ def extract_ratio(text: str):
         m = re.search(rf"<{tag}[^>]*>\s*([0-9]+\.[0-9]+)\s*</{tag}>", text, re.I)
         if m:
             v = float(m.group(1))
-            if 5.0 <= v <= 25.0:
+            if 3.0 <= v <= 35.0:
                 return v
 
     # ④ 보유비율 + % 패턴
     m = re.search(r"보유\s*비율[^0-9<]{0,60}([0-9]+\.[0-9]{1,4})\s*(?:%|％)", text)
     if m:
         v = float(m.group(1))
-        if 5.0 <= v <= 25.0:
+        if 3.0 <= v <= 35.0:
             return v
 
     return None
@@ -316,7 +317,7 @@ def main():
 
     now_kst    = datetime.now(KST)
     updated_at = now_kst.strftime("%Y-%m-%d %H:%M KST")
-    source     = "금감원 DART — 주식대량보유상황보고(D001) + dart.fss.or.kr 뷰어 파싱"
+    source     = "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱"
 
     # 기존 누적 데이터 로드
     existing_stocks  = []
