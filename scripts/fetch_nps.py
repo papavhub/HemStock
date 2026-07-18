@@ -37,19 +37,22 @@ SESSION = requests.Session()
 SESSION.headers.update(HEADERS)
 
 
-# ── Step 1: 국민연금 공시 전체 목록 (flr_nm 검색) ────────────────
+# ── Step 1: 국민연금 공시 전체 목록 ─────────────────────────────
 def fetch_nps_all_filings() -> list[dict]:
-    """DART list.json에서 국민연금공단이 제출한 D001 공시 수집 (최근 90일, 최대 5페이지)"""
+    """
+    DART list.json D002(임원ㆍ주요주주특정증권등소유상황보고서) 전체 조회 후
+    클라이언트 사이드에서 국민연금 필터링.
+    flr_nm API 파라미터는 DART 서버가 무시하므로 사용하지 않음.
+    """
     now    = datetime.now(KST)
     end_de = now.strftime("%Y%m%d")
     bgn_de = (now - timedelta(days=90)).strftime("%Y%m%d")
 
     all_items = []
-    for page in range(1, 6):
+    for page in range(1, 11):   # 최대 10페이지
         params = {
             "crtfc_key":        KEY,
-            "pblntf_detail_ty": "D002",   # 임원ㆍ주요주주특정증권등소유상황보고서 (국민연금 실제 사용 유형)
-            "flr_nm":           "국민연금공단",
+            "pblntf_detail_ty": "D002",   # 임원ㆍ주요주주특정증권등소유상황보고서
             "bgn_de":           bgn_de,
             "end_de":           end_de,
             "page_no":          str(page),
@@ -59,17 +62,17 @@ def fetch_nps_all_filings() -> list[dict]:
         data = res.json()
 
         status = data.get("status")
-        if status == "013":   # 데이터 없음 (마지막 페이지 이후)
+        if status == "013":   # 데이터 없음
             break
         if status != "000":
             print(f"  [WARN] list.json page={page} status={status}: {data.get('message','')}")
             break
 
-        items = data.get("list", [])
-        # 클라이언트 측 재확인: 실제 flr_nm이 국민연금인 것만
-        items = [i for i in items if "국민연금" in i.get("flr_nm", "")]
+        raw_items = data.get("list", [])
+        # 클라이언트 필터: 제출인명에 "국민연금" 포함된 것만
+        items = [i for i in raw_items if "국민연금" in i.get("flr_nm", "")]
         all_items.extend(items)
-        print(f"  page {page}: {len(items)}건 (누계 {len(all_items)}건)")
+        print(f"  page {page}: 전체 {len(raw_items)}건 중 국민연금 {len(items)}건 (누계 {len(all_items)}건)")
 
         total_page = int(data.get("total_page", 1))
         if page >= total_page:
