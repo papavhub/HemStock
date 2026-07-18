@@ -13,8 +13,9 @@ from pathlib import Path
 
 try:
     import yfinance as yf
+    import pandas as pd
 except ImportError:
-    print("[ERROR] yfinance 미설치", file=sys.stderr)
+    print("[ERROR] yfinance / pandas 미설치", file=sys.stderr)
     sys.exit(1)
 
 OUTPUT_PATH = Path(__file__).resolve().parent.parent / "public" / "data" / "breadth.json"
@@ -95,6 +96,56 @@ def get_recent_series(days: int = 6) -> list[dict]:
         return []
 
 
+def compute_adr_series(raw, tickers: list[str], days: int = 60) -> list[dict]:
+    """
+    일별 등락비율(ADR) MA10 시계열 계산
+    ADR = MA10(상승종목수) / MA10(하락종목수) × 100
+    - 75 이하 : 과매도 (바닥 탐색)
+    - 75 ~ 120: 중립
+    - 120 이상 : 과매수 (과열)
+    """
+    # 종목별 종가 DataFrame 구성
+    close_dict = {}
+    for ticker in tickers:
+        try:
+            closes = raw[ticker]["Close"] if len(tickers) > 1 else raw["Close"]
+            closes = closes.dropna()
+            if len(closes) >= 20:
+                close_dict[ticker] = closes
+        except Exception:
+            pass
+
+    if not close_dict:
+        return []
+
+    df  = pd.DataFrame(close_dict)
+    ret = df.pct_change()
+
+    adv_daily = (ret > 0.001).astype(int).sum(axis=1)   # 0.1% 이상 상승
+    dec_daily = (ret < -0.001).astype(int).sum(axis=1)  # 0.1% 이상 하락
+
+    # 10일 이동평균
+    adv_ma10 = adv_daily.rolling(10, min_periods=5).mean()
+    dec_ma10 = dec_daily.rolling(10, min_periods=5).mean()
+
+    result = []
+    for idx in df.index[-days:]:
+        a = adv_ma10.get(idx)
+        d = dec_ma10.get(idx)
+        if pd.isna(a) or pd.isna(d) or d == 0:
+            continue
+        adr = round(float(a) / float(d) * 100, 1)
+        adr = min(adr, 300.0)   # 이상치 클리핑
+        result.append({
+            "date": idx.strftime("%m/%d"),
+            "adr":  adr,
+            "adv":  int(adv_daily.get(idx, 0)),
+            "dec":  int(dec_daily.get(idx, 0)),
+        })
+
+    return result
+
+
 def main():
     print("=" * 55)
     print("  시장 건강 지표 수집 (yfinance — KOSPI 주요주)")
@@ -107,23 +158,38 @@ def main():
     print(f"\n  대상 종목: {len(KOSPI_TICKERS)}개 / 기준: 52주 신고가·신저가")
     print("  데이터 다운로드 중 (약 30~60초)...")
 
+    # ① 신고가·신저가 스냅샷 계산 (기존)
     highs, lows, total = get_snapshot(KOSPI_TICKERS)
     ratio = round(highs / (highs + lows) * 100, 1) if (highs + lows) > 0 else 0.0
+    print(f"  ✓ 신고가·신저가: {total}종목 | 고가 {highs}개 | 저가 {lows}개 | 비율 {ratio:.1f}%")
 
-    print(f"  ✓ 처리 완료: {total}개 종목  신고가 {highs}개 | 신저가 {lows}개 | 비율 {ratio:.1f}%")
+    # ② ADR(등락비율) 시계열 계산 (신규)
+    print("  ADR 시계열 계산 중...")
+    raw_data = yf.download(
+        KOSPI_TICKERS,
+        period="6mo",
+        interval="1d",
+        group_by="ticker",
+        auto_adjust=True,
+        progress=False,
+        threads=True,
+    )
+    adr_series = compute_adr_series(raw_data, KOSPI_TICKERS, days=60)
+    adr_latest = adr_series[-1]["adr"] if adr_series else None
+    print(f"  ✓ ADR MA10 최신: {adr_latest}  ({len(adr_series)}일치)")
 
-    # 최근 날짜 목록 (차트용 — 과거 데이터는 별도 수집 비용이 크므로 오늘 1포인트만 추가)
-    # 기존 JSON이 있으면 이어붙이고, 없으면 오늘 데이터로 시작
+    # 신고가·신저가 시계열 (누적)
     existing_series = []
+    existing_adr    = []
     if OUTPUT_PATH.exists():
         try:
             old = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
-            existing_series = old.get("series", [])[-29:]  # 최대 30일 유지
+            existing_series = old.get("series", [])[-29:]
+            existing_adr    = old.get("adr_series", [])
         except Exception:
             pass
 
     today_point = {"date": today_str, "highs": highs, "lows": lows}
-    # 같은 날짜면 덮어쓰기
     if existing_series and existing_series[-1]["date"] == today_str:
         existing_series[-1] = today_point
     else:
@@ -135,12 +201,18 @@ def main():
         "source":     f"Yahoo Finance (yfinance) — KOSPI 주요주 {len(KOSPI_TICKERS)}종목 기준",
         "latest":     {"highs": highs, "lows": lows, "ratio": ratio, "total": total},
         "series":     existing_series,
+        "adr_series": adr_series,                     # 60일 ADR MA10 시계열
+        "adr_latest": {
+            "value":    adr_latest,
+            "adv":      adr_series[-1]["adv"]  if adr_series else None,
+            "dec":      adr_series[-1]["dec"]  if adr_series else None,
+        },
     }
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
     print(f"\n  ✅ 저장 완료: {OUTPUT_PATH}")
-    print(f"  신고가 비율: {ratio:.1f}%  ({highs}/{highs+lows})")
+    print(f"  신고가 비율: {ratio:.1f}%  ADR: {adr_latest}")
 
 
 if __name__ == "__main__":

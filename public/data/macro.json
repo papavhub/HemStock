@@ -1,0 +1,59 @@
+{
+  "updated_at": "2026-07-04 04:00 KST",
+  "source": "FRED (St. Louis Fed) + 한국은행 ECOS",
+  "hy_spread": {
+    "series": [
+      {"date": "05/01", "value": 308.2}, {"date": "05/08", "value": 312.5},
+      {"date": "05/15", "value": 305.1}, {"date": "05/22", "value": 318.7},
+      {"date": "05/29", "value": 322.3}, {"date": "06/05", "value": 315.8},
+      {"date": "06/12", "value": 309.4}, {"date": "06/19", "value": 324.1},
+      {"date": "06/26", "value": 331.6}, {"date": "07/03", "value": 328.9}
+    ],
+    "latest": 328.9,
+    "prev": 331.6,
+    "change": -2.7,
+    "change_pct": -0.81
+  },
+  "buffett_us": {
+    "series": [
+      {"date": "01/01", "value": 155.2}, {"date": "04/01", "value": 162.8},
+      {"date": "07/01", "value": 171.3}, {"date": "10/01", "value": 168.9},
+      {"date": "01/01", "value": 178.4}, {"date": "04/01", "value": 185.1},
+      {"date": "07/01", "value": 192.6}, {"date": "10/01", "value": 188.3},
+      {"date": "01/01", "value": 196.4}
+    ],
+    "latest": 196.4,
+    "prev": 188.3,
+    "change": 8.1,
+    "change_pct": 4.3,
+    "label": "과열"
+  },
+  "deposit": {
+    "series": [
+      {"date": "2025-07", "value": 51.2}, {"date": "2025-08", "value": 53.8},
+      {"date": "2025-09", "value": 50.1}, {"date": "2025-10", "value": 55.3},
+      {"date": "2025-11", "value": 57.9}, {"date": "2025-12", "value": 54.2},
+      {"date": "2026-01", "value": 58.4}, {"date": "2026-02", "value": 56.1},
+      {"date": "2026-03", "value": 60.3}, {"date": "2026-04", "value": 62.7},
+      {"date": "2026-05", "value": 59.8}, {"date": "2026-06", "value": 61.4}
+    ],
+    "latest": 61.4,
+    "prev": 59.8,
+    "change": 1.6,
+    "change_pct": 2.67
+  },
+  "credit": {
+    "series": [
+      {"date": "2025-07", "value": 18.2}, {"date": "2025-08", "value": 19.1},
+      {"date": "2025-09", "value": 17.8}, {"date": "2025-10", "value": 20.3},
+      {"date": "2025-11", "value": 21.5}, {"date": "2025-12", "value": 19.7},
+      {"date": "2026-01", "value": 22.1}, {"date": "2026-02", "value": 20.8},
+      {"date": "2026-03", "value": 23.4}, {"date": "2026-04", "value": 24.9},
+      {"date": "2026-05", "value": 22.6}, {"date": "2026-06", "value": 23.8}
+    ],
+    "latest": 23.8,
+    "prev": 22.6,
+    "change": 1.2,
+    "change_pct": 5.31
+  }
+}

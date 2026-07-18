@@ -3,7 +3,8 @@ import React, {
 } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
+  ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts'
 import {
   Info, CheckSquare, Square, RefreshCw, Activity,
@@ -57,6 +58,14 @@ const HELP = {
     '주요 4개 지수 3개월 추이. KOSPI·KOSDAQ는 한국장, S&P500·NASDAQ는 미국장의 체력을 보여줍니다. 지수 간 격차(디커플링)가 생기면 수급 쏠림 신호입니다.',
   gold:
     '금은 전통적인 안전자산입니다. 금리 하락·달러 약세 구간에서 강세를 보이며, 급등할 때는 시장 불확실성이 높다는 신호입니다. 매일 새벽 yfinance로 자동 갱신합니다.',
+  hy_spread:
+    'ICE BofA 미국 하이일드 채권 스프레드(OAS) — 정크본드(투기등급 회사채)와 미국 국채의 금리 차이. 스프레드 급등은 기업 신용 위험 증가 = 경기침체 선행 지표. 300bp 이하 정상, 500bp 이상 주의, 800bp 이상 극위기. 2008년 금융위기 당시 약 2,000bp 기록. 출처: FRED (St. Louis Fed)',
+  adr:
+    '국내 증시 ADR(등락비율) — KOSPI 주요 80종목 중 상승종목수 / 하락종목수 × 100의 10일 이동평균. 75 이하는 단기 과매도(반등 탐색 구간), 120 이상은 과매수(단기 차익실현 구간). 지수 방향과 ADR 방향이 엇갈리면 추세 이상 신호. 출처: Yahoo Finance (yfinance)',
+  buffett:
+    '버핏 지수 — 미국 전체 주식 시가총액(Wilshire 5000) / 명목 GDP × 100%. 워런 버핏이 가장 선호하는 장기 밸류에이션 지표. 80% 이하 저평가, 100~120% 적정, 150%↑ 고평가, 200%↑ 극도 과열. 2021년 버블 당시 약 207% 기록. 출처: FRED (Wilshire 5000 Total Market Full Cap + US GDP)',
+  credit:
+    '투자자예탁금 & 신용융자잔고 — 예탁금(고객이 증권사에 맡긴 현금)은 잠재 매수 실탄, 융자잔고(빚내서 투자)는 레버리지 과열 지표. 융자↑·예탁금↓ = 빚투 과열(하락 리스크 증가). 융자↓·예탁금↑ = 대기 자금 풍부(상승 에너지). 출처: 한국은행 ECOS',
 }
 
 
@@ -259,6 +268,25 @@ function useNpsData() {
     try {
       const base = import.meta.env.BASE_URL || '/'
       const res  = await fetch(`${base}data/nps.json?t=${Date.now()}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setData(await res.json())
+    } catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { fetch_() }, [fetch_])
+  return { data, loading, error, refetch: fetch_ }
+}
+
+/** public/data/macro.json — HY스프레드·버핏지수·신용잔고·예탁금 */
+function useMacroData() {
+  const [data, setData]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+  const fetch_ = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const base = import.meta.env.BASE_URL || '/'
+      const res  = await fetch(`${base}data/macro.json?t=${Date.now()}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setData(await res.json())
     } catch (e) { setError(e.message) }
@@ -1750,6 +1778,309 @@ function KrFngWidget() {
 }
 
 // ═══════════════════════════════════════════════════
+// HySpreadWidget — 하이일드 채권 스프레드
+// ═══════════════════════════════════════════════════
+const HY_MOCK = {
+  series:  Array.from({ length: 30 }, (_, i) => ({ date: `0${String(i+1).padStart(2,'0')}/01`, value: 310 + Math.sin(i * 0.3) * 40 })),
+  latest:  320.5,
+  prev:    315.2,
+  change:  5.3,
+}
+
+function HySpreadWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useMacroData()
+
+  const hy = data?.hy_spread ?? null
+
+  const series = hy?.series ?? HY_MOCK.series
+  const latest = hy?.latest ?? HY_MOCK.latest
+  const prev   = hy?.prev   ?? HY_MOCK.prev
+  const chg    = hy?.change ?? HY_MOCK.change
+
+  const badge = latest >= 800 ? '극위기' : latest >= 500 ? '위기' : latest >= 300 ? '주의' : '정상'
+  const badgeColor = latest >= 800 ? C.red : latest >= 500 ? C.orange : latest >= 300 ? C.yellow : C.green
+  const up = chg > 0
+
+  return (
+    <Widget title="하이일드 채권 스프레드 (HY OAS)" badge={badge} badgeColor={badgeColor}
+      helpKey="hy_spread" source="FRED (St. Louis Fed)" sourceUrl="https://fred.stlouisfed.org/series/BAMLH0A0HYM2">
+      <InfoBox>
+        <span style={{ color: C.accent }}>ICE BofA HY OAS</span> — 정크본드와 미 국채 금리 차이.{' '}
+        스프레드 급등 = 기업 신용 위험 증가 = 경기침체 선행 신호.{' '}
+        <span style={{ color: C.green }}>300bp 이하 정상</span>,{' '}
+        <span style={{ color: C.orange }}>500bp↑ 위기</span>,{' '}
+        <span style={{ color: C.red }}>800bp↑ 극위기</span>.
+      </InfoBox>
+      {loading ? <Spinner /> : error && !hy ? (
+        <ApiError msg={error} onRetry={refetch} />
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-end gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>현재 스프레드</p>
+              <p className="text-3xl font-bold" style={{ color: badgeColor }}>{latest.toFixed(1)}<span className="text-sm ml-1">bp</span></p>
+            </div>
+            <p className="text-sm mb-1" style={{ color: up ? '#ef4444' : '#3b82f6' }}>
+              {up ? '▲' : '▼'} {Math.abs(chg).toFixed(1)}bp
+            </p>
+          </div>
+          <ResponsiveContainer width="100%" height={90}>
+            <LineChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+              <XAxis dataKey="date" tick={{ fontSize: 9, fill: C.muted }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 9, fill: C.muted }} domain={['auto', 'auto']} />
+              <Tooltip contentStyle={{ background: C.panel, border: `1px solid ${C.border}`, fontSize: 11 }}
+                formatter={v => [`${v.toFixed(1)} bp`, 'HY OAS']} />
+              <ReferenceLine y={300} stroke={C.green}  strokeDasharray="4 4" label={{ value: '300', fontSize: 8, fill: C.green }} />
+              <ReferenceLine y={500} stroke={C.orange} strokeDasharray="4 4" label={{ value: '500', fontSize: 8, fill: C.orange }} />
+              <ReferenceLine y={800} stroke={C.red}    strokeDasharray="4 4" label={{ value: '800', fontSize: 8, fill: C.red }} />
+              <Line type="monotone" dataKey="value" stroke={badgeColor} dot={false} strokeWidth={1.5} />
+            </LineChart>
+          </ResponsiveContainer>
+          {!hy && <p className="text-[9px] text-center" style={{ color: C.muted }}>⚠ 목업 데이터 (macro.json 미로드)</p>}
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
+// BuffettWidget — 버핏 지수 (미국 Wilshire5000/GDP)
+// ═══════════════════════════════════════════════════
+const BUFFETT_MOCK = {
+  series: Array.from({ length: 20 }, (_, i) => ({ date: `${2020+Math.floor(i/4)}-Q${(i%4)+1}`, value: 140 + i * 4 })),
+  latest: 196.4,
+  prev:   192.1,
+  change: 4.3,
+  label:  '과열',
+}
+
+function BuffettWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useMacroData()
+
+  const buf = data?.buffett_us ?? null
+  const series = buf?.series ?? BUFFETT_MOCK.series
+  const latest = buf?.latest ?? BUFFETT_MOCK.latest
+  const chg    = buf?.change ?? BUFFETT_MOCK.change
+  const label  = buf?.label  ?? BUFFETT_MOCK.label
+
+  const badgeColor = latest > 200 ? C.red : latest > 160 ? C.orange : latest > 120 ? C.yellow : latest > 80 ? C.green : C.accent
+  const up = chg > 0
+
+  return (
+    <Widget title="버핏 지수 (미국)" badge={label} badgeColor={badgeColor}
+      helpKey="buffett" source="FRED Wilshire5000 + GDP" sourceUrl="https://fred.stlouisfed.org/series/WILL5000INDFC">
+      <InfoBox>
+        <span style={{ color: C.accent }}>미국 전체 시총 / 명목 GDP</span>.{' '}
+        <span style={{ color: C.green }}>80% 이하 저평가</span> →{' '}
+        <span style={{ color: C.yellow }}>120% 이상 고평가</span> →{' '}
+        <span style={{ color: C.red }}>200%↑ 극도 과열</span>.
+        분기 데이터 기준.
+      </InfoBox>
+      {loading ? <Spinner /> : error && !buf ? (
+        <ApiError msg={error} onRetry={refetch} />
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-end gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>버핏 지수</p>
+              <p className="text-3xl font-bold" style={{ color: badgeColor }}>{latest.toFixed(1)}<span className="text-sm ml-1">%</span></p>
+            </div>
+            <p className="text-sm mb-1" style={{ color: up ? '#ef4444' : '#3b82f6' }}>
+              {up ? '▲' : '▼'} {Math.abs(chg).toFixed(1)}%p
+            </p>
+          </div>
+          <ResponsiveContainer width="100%" height={90}>
+            <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+              <XAxis dataKey="date" tick={{ fontSize: 8, fill: C.muted }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 9, fill: C.muted }} domain={[0, 'auto']} />
+              <Tooltip contentStyle={{ background: C.panel, border: `1px solid ${C.border}`, fontSize: 11 }}
+                formatter={v => [`${v.toFixed(1)}%`, '버핏 지수']} />
+              <ReferenceLine y={80}  stroke={C.green}  strokeDasharray="4 4" label={{ value: '80%', fontSize: 8, fill: C.green }} />
+              <ReferenceLine y={120} stroke={C.yellow} strokeDasharray="4 4" label={{ value: '120%', fontSize: 8, fill: C.yellow }} />
+              <ReferenceLine y={160} stroke={C.orange} strokeDasharray="4 4" label={{ value: '160%', fontSize: 8, fill: C.orange }} />
+              <Area type="monotone" dataKey="value" stroke={badgeColor} fill={badgeColor} fillOpacity={0.15} dot={false} strokeWidth={1.5} />
+            </AreaChart>
+          </ResponsiveContainer>
+          {!buf && <p className="text-[9px] text-center" style={{ color: C.muted }}>⚠ 목업 데이터 (macro.json 미로드)</p>}
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
+// AdrWidget — 국내 증시 ADR 등락비율
+// ═══════════════════════════════════════════════════
+const ADR_MOCK = {
+  adr_series: Array.from({ length: 30 }, (_, i) => ({ date: `06/${String(i+1).padStart(2,'0')}`, adr: 85 + Math.sin(i * 0.4) * 25 })),
+  adr_latest: { value: 92.3, adv: 41, dec: 35 },
+}
+
+function AdrWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useBreadthData()
+
+  const series = data?.adr_series ?? ADR_MOCK.adr_series
+  const adrObj = data?.adr_latest ?? ADR_MOCK.adr_latest
+  const adrVal = adrObj?.value ?? null
+
+  const badge = adrVal == null ? '—' : adrVal < 75 ? '과매도' : adrVal > 120 ? '과매수' : '중립'
+  const badgeColor = adrVal == null ? C.muted : adrVal < 75 ? C.green : adrVal > 120 ? C.red : C.accent
+
+  const pct = adrVal != null ? Math.min(Math.max((adrVal / 200) * 100, 0), 100) : 50
+
+  return (
+    <Widget title="국내 ADR 등락비율 (MA10)" badge={badge} badgeColor={badgeColor}
+      helpKey="adr" source="Yahoo Finance (yfinance)" sourceUrl="https://finance.yahoo.com">
+      <InfoBox>
+        <span style={{ color: C.accent }}>KOSPI 주요 80종목</span> 상승종목/하락종목 수 비율의 10일 MA.{' '}
+        <span style={{ color: C.green }}>75 이하 과매도(바닥 탐색)</span>,{' '}
+        <span style={{ color: C.red }}>120 이상 과매수(과열)</span>.
+      </InfoBox>
+      {loading ? <Spinner /> : error && !data ? (
+        <ApiError msg={error} onRetry={refetch} />
+      ) : (
+        <div className="space-y-3">
+          {/* 현재값 + Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest" style={{ color: C.muted }}>ADR MA10</p>
+                <p className="text-3xl font-bold" style={{ color: badgeColor }}>{adrVal?.toFixed(1) ?? '—'}</p>
+              </div>
+              <div className="text-right text-[10px]" style={{ color: C.muted }}>
+                <div>상승 {adrObj?.adv ?? '—'}종목</div>
+                <div>하락 {adrObj?.dec ?? '—'}종목</div>
+              </div>
+            </div>
+            {/* Progress Bar */}
+            <div className="relative h-3 rounded-full overflow-hidden" style={{ background: C.border }}>
+              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: badgeColor }} />
+              {/* 75 marker */}
+              <div className="absolute inset-y-0 w-px" style={{ left: '37.5%', background: C.green, opacity: 0.8 }} />
+              {/* 120 marker */}
+              <div className="absolute inset-y-0 w-px" style={{ left: '60%', background: C.red, opacity: 0.8 }} />
+            </div>
+            <div className="flex justify-between text-[9px]" style={{ color: C.muted }}>
+              <span style={{ color: C.green }}>▸ 75 과매도</span>
+              <span>중립</span>
+              <span style={{ color: C.red }}>120 과매수 ◂</span>
+            </div>
+          </div>
+          {/* 60일 시계열 */}
+          <ResponsiveContainer width="100%" height={80}>
+            <LineChart data={series} margin={{ top: 2, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+              <XAxis dataKey="date" tick={{ fontSize: 8, fill: C.muted }} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 9, fill: C.muted }} domain={[0, 200]} />
+              <Tooltip contentStyle={{ background: C.panel, border: `1px solid ${C.border}`, fontSize: 11 }}
+                formatter={v => [`${v.toFixed(1)}`, 'ADR MA10']} />
+              <ReferenceLine y={75}  stroke={C.green} strokeDasharray="4 4" />
+              <ReferenceLine y={120} stroke={C.red}   strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="adr" stroke={C.accent} dot={false} strokeWidth={1.5} />
+            </LineChart>
+          </ResponsiveContainer>
+          {!data && <p className="text-[9px] text-center" style={{ color: C.muted }}>⚠ 목업 데이터 (breadth.json 미로드)</p>}
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
+// CreditWidget — 신용융자잔고 & 투자자예탁금
+// ═══════════════════════════════════════════════════
+const CREDIT_MOCK = {
+  deposit: { series: Array.from({ length: 12 }, (_, i) => ({ date: `2025-${String(i+1).padStart(2,'0')}`, value: 48 + Math.random() * 8 })), latest: 52.3 },
+  credit:  { series: Array.from({ length: 12 }, (_, i) => ({ date: `2025-${String(i+1).padStart(2,'0')}`, value: 17 + Math.random() * 5  })), latest: 19.8 },
+}
+
+function CreditWidget() {
+  const C = useC()
+  const { data, loading, error, refetch } = useMacroData()
+
+  const depositData = data?.deposit ?? CREDIT_MOCK.deposit
+  const creditData  = data?.credit  ?? CREDIT_MOCK.credit
+
+  const depositLatest = depositData?.latest ?? null
+  const creditLatest  = creditData?.latest  ?? null
+
+  // 날짜 기준 merge
+  const mergedSeries = (() => {
+    const dep = depositData?.series ?? []
+    const crd = creditData?.series  ?? []
+    const map = {}
+    dep.forEach(r => { map[r.date] = { ...map[r.date], date: r.date, deposit: r.value } })
+    crd.forEach(r => { map[r.date] = { ...map[r.date], date: r.date, credit:  r.value } })
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date)).slice(-24)
+  })()
+
+  const depositChg = depositData?.change ?? null
+  const creditChg  = creditData?.change  ?? null
+
+  return (
+    <Widget title="신용융자잔고 & 투자자예탁금" helpKey="credit"
+      source="한국은행 ECOS" sourceUrl="https://ecos.bok.or.kr">
+      <InfoBox>
+        <span style={{ color: C.accent }}>예탁금↑ = 매수 실탄 풍부</span>,{' '}
+        <span style={{ color: C.red }}>융자잔고↑ = 빚투 과열(하락 리스크)</span>.
+        월별 데이터, 조원 단위.
+      </InfoBox>
+      {loading ? <Spinner /> : error && !data ? (
+        <ApiError msg={error} onRetry={refetch} />
+      ) : (
+        <div className="space-y-3">
+          {/* 최신값 요약 */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded p-2" style={{ background: C.header }}>
+              <p className="text-[9px] uppercase tracking-widest" style={{ color: C.muted }}>투자자예탁금</p>
+              <p className="text-xl font-bold" style={{ color: C.accent }}>
+                {depositLatest?.toFixed(1) ?? '—'}<span className="text-xs ml-1">조</span>
+              </p>
+              {depositChg != null && (
+                <p className="text-[10px]" style={{ color: depositChg >= 0 ? C.green : C.red }}>
+                  {depositChg >= 0 ? '▲' : '▼'} {Math.abs(depositChg).toFixed(1)}조
+                </p>
+              )}
+            </div>
+            <div className="rounded p-2" style={{ background: C.header }}>
+              <p className="text-[9px] uppercase tracking-widest" style={{ color: C.muted }}>신용융자잔고</p>
+              <p className="text-xl font-bold" style={{ color: C.orange }}>
+                {creditLatest?.toFixed(1) ?? '—'}<span className="text-xs ml-1">조</span>
+              </p>
+              {creditChg != null && (
+                <p className="text-[10px]" style={{ color: creditChg >= 0 ? C.red : C.green }}>
+                  {creditChg >= 0 ? '▲' : '▼'} {Math.abs(creditChg).toFixed(1)}조
+                </p>
+              )}
+            </div>
+          </div>
+          {/* 복합 차트 */}
+          <ResponsiveContainer width="100%" height={110}>
+            <ComposedChart data={mergedSeries} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+              <XAxis dataKey="date" tick={{ fontSize: 8, fill: C.muted }} interval="preserveStartEnd" />
+              <YAxis yAxisId="dep" orientation="left"  tick={{ fontSize: 8, fill: C.muted }} domain={['auto','auto']} />
+              <YAxis yAxisId="crd" orientation="right" tick={{ fontSize: 8, fill: C.muted }} domain={['auto','auto']} />
+              <Tooltip contentStyle={{ background: C.panel, border: `1px solid ${C.border}`, fontSize: 11 }}
+                formatter={(v, name) => [`${v?.toFixed(1)} 조원`, name === 'deposit' ? '예탁금' : '융자잔고']} />
+              <Bar    yAxisId="dep" dataKey="deposit" fill={C.accent}  opacity={0.5} name="deposit" />
+              <Line   yAxisId="crd" dataKey="credit"  stroke={C.orange} dot={false} strokeWidth={2} name="credit" />
+            </ComposedChart>
+          </ResponsiveContainer>
+          {!data && <p className="text-[9px] text-center" style={{ color: C.muted }}>⚠ 목업 데이터 (macro.json 미로드)</p>}
+        </div>
+      )}
+    </Widget>
+  )
+}
+
+// ═══════════════════════════════════════════════════
 // 사이드바
 // ═══════════════════════════════════════════════════
 function Sidebar() {
@@ -2120,16 +2451,26 @@ export default function Dashboard() {
 
               {/* ── 섹션 3: 미국 시장 (GitHub Actions · yfinance) ── */}
               <SectionHeader flag="🇺🇸" title="미국 시장 / 매크로"
-                sub="매일 04:00 KST 자동갱신 · Yahoo Finance (yfinance)" />
+                sub="매일 04:00 KST 자동갱신 · Yahoo Finance · FRED (St. Louis Fed)" />
 
               {/* 금리·매크로: 전체 너비 */}
               <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                 <FedWidget />
               </div>
 
+              {/* HY 스프레드: 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <HySpreadWidget />
+              </div>
+
+              {/* 버핏 지수: 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <BuffettWidget />
+              </div>
+
               {/* ── 섹션 4: 한국 시장 (GitHub Actions) ── */}
               <SectionHeader flag="🇰🇷" title="한국 시장"
-                sub="매일 04:00 KST 자동갱신 · DART OpenAPI · yfinance" />
+                sub="매일 04:00 KST 자동갱신 · DART OpenAPI · yfinance · 한국은행 ECOS" />
 
               {/* NPS: 데스크톱 2칸 × 2행, 모바일 전체 */}
               <div className="col-span-1 sm:col-span-2 lg:row-span-2">
@@ -2146,13 +2487,23 @@ export default function Dashboard() {
                 <KrFngWidget />
               </div>
 
+              {/* ADR: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <AdrWidget />
+              </div>
+
+              {/* 신용잔고 & 예탁금: 데스크톱 2칸 */}
+              <div className="col-span-1 sm:col-span-2">
+                <CreditWidget />
+              </div>
+
               {/* 푸터 */}
               <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 px-1 py-3 text-[10px]"
                 style={{ color: C.muted, borderTop: `1px solid ${C.border}` }}>
                 <span className="leading-relaxed">
-                  HemStock v0.6 ·
+                  HemStock v0.7 ·
                   <span style={{ color: C.green }}> ✓ 실시간</span>: 공포탐욕·환율·BTC ·
-                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: 지수·금·VIX·금리·DXY·NPS·신고가
+                  <span style={{ color: C.accent }}> ⟳ 04:00 KST</span>: 지수·금·VIX·금리·DXY·NPS·신고가·ADR·HY스프레드·버핏지수·신용잔고
                 </span>
                 <span className="shrink-0">투자 참고용 · 투자 권유 아님</span>
               </div>
