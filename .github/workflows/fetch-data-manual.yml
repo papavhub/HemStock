@@ -1,0 +1,92 @@
+name: 🔧 데이터 수집 수동 실행 (개발용)
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: '실행할 스크립트'
+        required: true
+        type: choice
+        options:
+          - all
+          - fetch_nps
+          - fetch_market_data
+          - fetch_breadth
+          - fetch_kr_rates
+          - fetch_macro
+        default: fetch_nps
+      push_result:
+        description: '수집 결과를 커밋&푸시할까요?'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    name: 📥 ${{ inputs.script }} 수집
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: 의존성 설치
+        run: pip install -r scripts/requirements.txt
+
+      - name: fetch_nps
+        if: inputs.script == 'all' || inputs.script == 'fetch_nps'
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/fetch_nps.py
+
+      - name: fetch_market_data
+        if: inputs.script == 'all' || inputs.script == 'fetch_market_data'
+        run: python scripts/fetch_market_data.py
+
+      - name: fetch_breadth
+        if: inputs.script == 'all' || inputs.script == 'fetch_breadth'
+        run: python scripts/fetch_breadth.py
+
+      - name: fetch_kr_rates
+        if: inputs.script == 'all' || inputs.script == 'fetch_kr_rates'
+        env:
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: python scripts/fetch_kr_rates.py
+
+      - name: fetch_macro
+        if: inputs.script == 'all' || inputs.script == 'fetch_macro'
+        env:
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: python scripts/fetch_macro.py
+
+      - name: 수집 결과 확인
+        run: |
+          echo "=== 변경된 파일 ==="
+          git diff --name-only public/data/ || echo "(변경 없음)"
+          echo ""
+          echo "=== nps.json updated_at ==="
+          python3 -c "import json; d=json.load(open('public/data/nps.json')); print(d.get('updated_at'), '| 종목:', len(d.get('stocks',[])), '| 변동:', len(d.get('changes',[])), '건')" 2>/dev/null || true
+
+      - name: 커밋 & 푸시
+        if: inputs.push_result == true
+        run: |
+          if git diff --quiet public/data/; then
+            echo "변경 사항 없음 — 커밋 스킵"
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add public/data/
+            git commit -m "🔧 수동 수집: ${{ inputs.script }}"
+            git push
+            echo "✅ 푸시 완료"
+          fi
