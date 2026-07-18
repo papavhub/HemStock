@@ -1,0 +1,81 @@
+name: 📥 데이터 수집
+
+on:
+  schedule:
+    - cron: '0 19 * * *'   # 매일 KST 04:00 (UTC 19:00)
+  workflow_dispatch:
+    inputs:
+      script:
+        description: '실행할 스크립트 (기본: all)'
+        required: false
+        type: choice
+        options:
+          - all
+          - fetch_nps
+          - fetch_market_data
+          - fetch_breadth
+          - fetch_kr_rates
+          - fetch_macro
+        default: all
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    name: 📥 시장 데이터 수집
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: 의존성 설치
+        run: pip install -r scripts/requirements.txt
+
+      - name: NPS 수집 (DART OpenAPI)
+        if: inputs.script == '' || inputs.script == 'all' || inputs.script == 'fetch_nps'
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/fetch_nps.py
+
+      - name: 시장 핵심지표 수집 (VIX·금리·DXY)
+        if: inputs.script == '' || inputs.script == 'all' || inputs.script == 'fetch_market_data'
+        run: python scripts/fetch_market_data.py
+
+      - name: 신고가 비율 수집 (KOSPI 주요주 + ADR)
+        if: inputs.script == '' || inputs.script == 'all' || inputs.script == 'fetch_breadth'
+        run: python scripts/fetch_breadth.py
+
+      - name: 한국 국채 금리 수집 (BOK ECOS)
+        if: inputs.script == '' || inputs.script == 'all' || inputs.script == 'fetch_kr_rates'
+        env:
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: python scripts/fetch_kr_rates.py
+
+      - name: 매크로 지표 수집 (FRED + BOK ECOS)
+        if: inputs.script == '' || inputs.script == 'all' || inputs.script == 'fetch_macro'
+        env:
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: python scripts/fetch_macro.py
+
+      - name: 변경 여부 확인 & 커밋 & 푸시
+        run: |
+          if git diff --quiet public/data/; then
+            echo "변경 없음 — 커밋 스킵"
+          else
+            echo "변경 감지:"
+            git diff --name-only public/data/
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add public/data/
+            git commit -m "💡 자동 업데이트: $(git diff --cached --name-only public/data/ | tr '\n' ' ')"
+            git push
+          fi
