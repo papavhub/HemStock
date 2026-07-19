@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-19 14:44 KST",
+  "updated_at": "2026-07-20 05:03 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -13,7 +13,7 @@
     {
       "name": "현대해상",
       "value": 10.15,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.15%",
       "rcept_dt": "2026-07-13",
       "rank": 2
@@ -21,7 +21,7 @@
     {
       "name": "한섬",
       "value": 10.09,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.09%",
       "rcept_dt": "2026-07-13",
       "rank": 3
@@ -29,7 +29,7 @@
     {
       "name": "롯데관광개발",
       "value": 10.01,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.01%",
       "rcept_dt": "2026-07-13",
       "rank": 4
