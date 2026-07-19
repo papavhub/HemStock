@@ -75,7 +75,7 @@ jobs:
             git diff --name-only public/data/
             git config user.name  "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git pull --rebase origin main
+            git pull --rebase --autostash origin main
             git add public/data/
             git commit -m "💡 자동 업데이트: $(git diff --cached --name-only public/data/ | tr '\n' ' ')"
             git push
