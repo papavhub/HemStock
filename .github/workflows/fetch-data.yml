@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   fetch:
@@ -67,9 +68,11 @@ jobs:
         run: python scripts/fetch_macro.py
 
       - name: 변경 여부 확인 & 커밋 & 푸시
+        id: push
         run: |
           if git diff --quiet public/data/; then
             echo "변경 없음 — 커밋 스킵"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
           else
             echo "변경 감지:"
             git diff --name-only public/data/
@@ -79,4 +82,11 @@ jobs:
             git add public/data/
             git commit -m "💡 자동 업데이트: $(git diff --cached --name-only public/data/ | tr '\n' ' ')"
             git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: 배포 트리거 (데이터 변경 시)
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
