@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-19 00:33 KST (공시 없음 — 이전 데이터 유지)",
+  "updated_at": "2026-07-19 14:44 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -11,12 +11,36 @@
       "rank": 1
     },
     {
+      "name": "현대해상",
+      "value": 10.15,
+      "change": 0,
+      "amount": "지분율 10.15%",
+      "rcept_dt": "2026-07-13",
+      "rank": 2
+    },
+    {
+      "name": "한섬",
+      "value": 10.09,
+      "change": 0,
+      "amount": "지분율 10.09%",
+      "rcept_dt": "2026-07-13",
+      "rank": 3
+    },
+    {
+      "name": "롯데관광개발",
+      "value": 10.01,
+      "change": 0,
+      "amount": "지분율 10.01%",
+      "rcept_dt": "2026-07-13",
+      "rank": 4
+    },
+    {
       "name": "RF머트리얼즈",
       "value": 7.48,
       "change": 0.0,
       "amount": "지분율 7.48%",
       "rcept_dt": "2026-07-01",
-      "rank": 2
+      "rank": 5
     },
     {
       "name": "피에스케이",
@@ -24,7 +48,7 @@
       "change": 0.0,
       "amount": "지분율 7.12%",
       "rcept_dt": "2026-07-01",
-      "rank": 3
+      "rank": 6
     },
     {
       "name": "동국제강",
@@ -32,7 +56,7 @@
       "change": 0.0,
       "amount": "지분율 6.13%",
       "rcept_dt": "2026-07-01",
-      "rank": 4
+      "rank": 7
     },
     {
       "name": "알지노믹스",
@@ -40,7 +64,7 @@
       "change": 0.0,
       "amount": "지분율 5.04%",
       "rcept_dt": "2026-07-01",
-      "rank": 5
+      "rank": 8
     },
     {
       "name": "씨엠티엑스",
@@ -48,7 +72,7 @@
       "change": 0.0,
       "amount": "지분율 5.03%",
       "rcept_dt": "2026-07-01",
-      "rank": 6
+      "rank": 9
     },
     {
       "name": "솔브레인",
@@ -56,7 +80,7 @@
       "change": 0.0,
       "amount": "지분율 5.02%",
       "rcept_dt": "2026-07-01",
-      "rank": 7
+      "rank": 10
     },
     {
       "name": "파인엠텍",
@@ -64,10 +88,34 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2026-07-01",
-      "rank": 8
+      "rank": 11
     }
   ],
   "changes": [
+    {
+      "name": "현대해상",
+      "value": 10.15,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-13",
+      "is_new": true
+    },
+    {
+      "name": "롯데관광개발",
+      "value": 10.01,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-13",
+      "is_new": true
+    },
+    {
+      "name": "한섬",
+      "value": 10.09,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-13",
+      "is_new": true
+    },
     {
       "name": "코스메카코리아",
       "value": 12.98,
