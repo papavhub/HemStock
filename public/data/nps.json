@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-23 05:07 KST (공시 없음 — 이전 데이터 유지)",
+  "updated_at": "2026-07-24 05:08 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -27,12 +27,28 @@
       "rank": 3
     },
     {
-      "name": "롯데관광개발",
-      "value": 10.01,
-      "change": 0.0,
-      "amount": "지분율 10.01%",
-      "rcept_dt": "2026-07-13",
+      "name": "효성중공업",
+      "value": 9.98,
+      "change": 0,
+      "amount": "지분율 9.98%",
+      "rcept_dt": "2026-07-23",
       "rank": 4
+    },
+    {
+      "name": "파라다이스",
+      "value": 9.58,
+      "change": 0,
+      "amount": "지분율 9.58%",
+      "rcept_dt": "2026-07-23",
+      "rank": 5
+    },
+    {
+      "name": "롯데관광개발",
+      "value": 8.89,
+      "change": -1.12,
+      "amount": "지분율 8.89%",
+      "rcept_dt": "2026-07-23",
+      "rank": 6
     },
     {
       "name": "RF머트리얼즈",
@@ -40,7 +56,7 @@
       "change": 0.0,
       "amount": "지분율 7.48%",
       "rcept_dt": "2026-07-01",
-      "rank": 5
+      "rank": 7
     },
     {
       "name": "피에스케이",
@@ -48,7 +64,7 @@
       "change": 0.0,
       "amount": "지분율 7.12%",
       "rcept_dt": "2026-07-01",
-      "rank": 6
+      "rank": 8
     },
     {
       "name": "동국제강",
@@ -56,7 +72,7 @@
       "change": 0.0,
       "amount": "지분율 6.13%",
       "rcept_dt": "2026-07-01",
-      "rank": 7
+      "rank": 9
     },
     {
       "name": "알지노믹스",
@@ -64,7 +80,7 @@
       "change": 0.0,
       "amount": "지분율 5.04%",
       "rcept_dt": "2026-07-01",
-      "rank": 8
+      "rank": 10
     },
     {
       "name": "씨엠티엑스",
@@ -72,7 +88,7 @@
       "change": 0.0,
       "amount": "지분율 5.03%",
       "rcept_dt": "2026-07-01",
-      "rank": 9
+      "rank": 11
     },
     {
       "name": "솔브레인",
@@ -80,7 +96,7 @@
       "change": 0.0,
       "amount": "지분율 5.02%",
       "rcept_dt": "2026-07-01",
-      "rank": 10
+      "rank": 12
     },
     {
       "name": "파인엠텍",
@@ -88,10 +104,34 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2026-07-01",
-      "rank": 11
+      "rank": 13
     }
   ],
   "changes": [
+    {
+      "name": "파라다이스",
+      "value": 9.58,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-23",
+      "is_new": true
+    },
+    {
+      "name": "효성중공업",
+      "value": 9.98,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-07-23",
+      "is_new": true
+    },
+    {
+      "name": "롯데관광개발",
+      "value": 8.89,
+      "prev": 10.01,
+      "change": -1.12,
+      "rcept_dt": "2026-07-23",
+      "is_new": false
+    },
     {
       "name": "현대해상",
       "value": 10.15,

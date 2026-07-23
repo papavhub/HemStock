@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-07-23 05:07 KST",
+  "updated_at": "2026-07-24 05:08 KST",
   "source": "Yahoo Finance (yfinance) — KOSPI 주요주 80종목 기준",
   "latest": {
     "highs": 1,
-    "lows": 12,
-    "ratio": 7.7,
+    "lows": 9,
+    "ratio": 10.0,
     "total": 80
   },
   "series": [
@@ -137,15 +137,14 @@
       "date": "07/23",
       "highs": 1,
       "lows": 12
+    },
+    {
+      "date": "07/24",
+      "highs": 1,
+      "lows": 9
     }
   ],
   "adr_series": [
-    {
-      "date": "04/22",
-      "adr": 132.9,
-      "adv": 33,
-      "dec": 40
-    },
     {
       "date": "04/23",
       "adr": 137.7,
@@ -499,11 +498,17 @@
       "adr": 73.0,
       "adv": 47,
       "dec": 30
+    },
+    {
+      "date": "07/22",
+      "adr": 79.1,
+      "adv": 55,
+      "dec": 23
     }
   ],
   "adr_latest": {
-    "value": 73.0,
-    "adv": 47,
-    "dec": 30
+    "value": 79.1,
+    "adv": 55,
+    "dec": 23
   }
 }
