@@ -1,6 +1,98 @@
 {
-  "updated_at": "2026-07-25 05:12 KST",
+  "updated_at": "2026-07-26 05:07 KST",
   "source": "Yahoo Finance (yfinance) — 종가 기준",
+  "vix": {
+    "series": [
+      {
+        "date": "06/24",
+        "value": 18.63
+      },
+      {
+        "date": "06/25",
+        "value": 18.89
+      },
+      {
+        "date": "06/26",
+        "value": 18.41
+      },
+      {
+        "date": "06/29",
+        "value": 17.65
+      },
+      {
+        "date": "06/30",
+        "value": 16.45
+      },
+      {
+        "date": "07/01",
+        "value": 16.59
+      },
+      {
+        "date": "07/02",
+        "value": 16.15
+      },
+      {
+        "date": "07/06",
+        "value": 15.57
+      },
+      {
+        "date": "07/07",
+        "value": 16.13
+      },
+      {
+        "date": "07/08",
+        "value": 16.9
+      },
+      {
+        "date": "07/09",
+        "value": 15.84
+      },
+      {
+        "date": "07/10",
+        "value": 15.03
+      },
+      {
+        "date": "07/13",
+        "value": 17.16
+      },
+      {
+        "date": "07/14",
+        "value": 16.5
+      },
+      {
+        "date": "07/15",
+        "value": 15.67
+      },
+      {
+        "date": "07/16",
+        "value": 16.73
+      },
+      {
+        "date": "07/17",
+        "value": 18.77
+      },
+      {
+        "date": "07/20",
+        "value": 18.65
+      },
+      {
+        "date": "07/21",
+        "value": 17.05
+      },
+      {
+        "date": "07/22",
+        "value": 16.64
+      },
+      {
+        "date": "07/23",
+        "value": 18.7
+      }
+    ],
+    "latest": 18.7,
+    "prev": 16.64,
+    "change": 2.06,
+    "change_pct": 12.38
+  },
   "treasury_2y": {
     "series": [
       {
@@ -250,119 +342,15 @@
       {
         "date": "07/23",
         "value": 3.8
-      },
-      {
-        "date": "07/24",
-        "value": 3.8
       }
     ],
     "latest": 3.8,
-    "prev": 3.8,
-    "change": 0.0,
-    "change_pct": 0.0
-  },
-  "vix": {
-    "series": [
-      {
-        "date": "06/24",
-        "value": 18.63
-      },
-      {
-        "date": "06/25",
-        "value": 18.89
-      },
-      {
-        "date": "06/26",
-        "value": 18.41
-      },
-      {
-        "date": "06/29",
-        "value": 17.65
-      },
-      {
-        "date": "06/30",
-        "value": 16.45
-      },
-      {
-        "date": "07/01",
-        "value": 16.59
-      },
-      {
-        "date": "07/02",
-        "value": 16.15
-      },
-      {
-        "date": "07/06",
-        "value": 15.57
-      },
-      {
-        "date": "07/07",
-        "value": 16.13
-      },
-      {
-        "date": "07/08",
-        "value": 16.9
-      },
-      {
-        "date": "07/09",
-        "value": 15.84
-      },
-      {
-        "date": "07/10",
-        "value": 15.03
-      },
-      {
-        "date": "07/13",
-        "value": 17.16
-      },
-      {
-        "date": "07/14",
-        "value": 16.5
-      },
-      {
-        "date": "07/15",
-        "value": 15.67
-      },
-      {
-        "date": "07/16",
-        "value": 16.73
-      },
-      {
-        "date": "07/17",
-        "value": 18.77
-      },
-      {
-        "date": "07/20",
-        "value": 18.65
-      },
-      {
-        "date": "07/21",
-        "value": 17.05
-      },
-      {
-        "date": "07/22",
-        "value": 16.64
-      },
-      {
-        "date": "07/23",
-        "value": 18.7
-      },
-      {
-        "date": "07/24",
-        "value": 18.69
-      }
-    ],
-    "latest": 18.69,
-    "prev": 18.7,
-    "change": -0.01,
-    "change_pct": -0.05
+    "prev": 3.74,
+    "change": 0.06,
+    "change_pct": 1.6
   },
   "dxy": {
     "series": [
-      {
-        "date": "04/24",
-        "value": 98.51
-      },
       {
         "date": "04/27",
         "value": 98.48
@@ -606,16 +594,12 @@
       {
         "date": "07/23",
         "value": 101.43
-      },
-      {
-        "date": "07/24",
-        "value": 101.47
       }
     ],
-    "latest": 101.47,
-    "prev": 101.43,
-    "change": 0.04,
-    "change_pct": 0.04
+    "latest": 101.43,
+    "prev": 101.14,
+    "change": 0.29,
+    "change_pct": 0.29
   },
   "treasury_10y": {
     "series": [
@@ -866,16 +850,12 @@
       {
         "date": "07/23",
         "value": 4.7
-      },
-      {
-        "date": "07/24",
-        "value": 4.68
       }
     ],
-    "latest": 4.68,
-    "prev": 4.7,
-    "change": -0.02,
-    "change_pct": -0.43
+    "latest": 4.7,
+    "prev": 4.66,
+    "change": 0.04,
+    "change_pct": 0.86
   },
   "spx": {
     "series": [
@@ -1122,16 +1102,12 @@
       {
         "date": "07/23",
         "value": 7408.3
-      },
-      {
-        "date": "07/24",
-        "value": 7411.98
       }
     ],
-    "latest": 7411.98,
-    "prev": 7408.3,
-    "change": 3.68,
-    "change_pct": 0.05
+    "latest": 7408.3,
+    "prev": 7498.96,
+    "change": -90.66,
+    "change_pct": -1.21
   },
   "nasdaq": {
     "series": [
@@ -1378,16 +1354,12 @@
       {
         "date": "07/23",
         "value": 25137.69
-      },
-      {
-        "date": "07/24",
-        "value": 24975.82
       }
     ],
-    "latest": 24975.82,
-    "prev": 25137.69,
-    "change": -161.87,
-    "change_pct": -0.64
+    "latest": 25137.69,
+    "prev": 25690.9,
+    "change": -553.21,
+    "change_pct": -2.15
   },
   "kosdaq": {
     "series": [
@@ -1888,10 +1860,6 @@
   "gold": {
     "series": [
       {
-        "date": "04/24",
-        "value": 4722.3
-      },
-      {
         "date": "04/27",
         "value": 4675.4
       },
@@ -2137,13 +2105,13 @@
       },
       {
         "date": "07/24",
-        "value": 4057.5
+        "value": 4067.6
       }
     ],
-    "latest": 4057.5,
+    "latest": 4067.6,
     "prev": 4046.6,
-    "change": 10.9,
-    "change_pct": 0.27
+    "change": 21.0,
+    "change_pct": 0.52
   },
   "usdkrw": {
     "series": [
@@ -2409,20 +2377,20 @@
       },
       {
         "date": "07/24",
-        "value": 1460.38
+        "value": 1474.04
+      },
+      {
+        "date": "07/25",
+        "value": 1462.1
       }
     ],
-    "latest": 1460.38,
-    "prev": 1475.63,
-    "change": -15.25,
-    "change_pct": -1.03
+    "latest": 1462.1,
+    "prev": 1474.04,
+    "change": -11.94,
+    "change_pct": -0.81
   },
   "btc": {
     "series": [
-      {
-        "date": "04/24",
-        "value": 77455.31
-      },
       {
         "date": "04/25",
         "value": 77612.02
@@ -2785,13 +2753,17 @@
       },
       {
         "date": "07/24",
-        "value": 63925.97
+        "value": 64098.5
+      },
+      {
+        "date": "07/25",
+        "value": 64300.81
       }
     ],
-    "latest": 63925.97,
-    "prev": 65044.81,
-    "change": -1118.84,
-    "change_pct": -1.72
+    "latest": 64300.81,
+    "prev": 64098.5,
+    "change": 202.31,
+    "change_pct": 0.32
   },
   "kr_10y": {
     "series": [
