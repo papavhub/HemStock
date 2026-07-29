@@ -1,18 +1,13 @@
 {
-  "updated_at": "2026-07-29 05:11 KST",
+  "updated_at": "2026-07-30 05:08 KST",
   "source": "Yahoo Finance (yfinance) — KOSPI 주요주 80종목 기준",
   "latest": {
     "highs": 0,
-    "lows": 1,
+    "lows": 11,
     "ratio": 0.0,
     "total": 80
   },
   "series": [
-    {
-      "date": "06/28",
-      "highs": 0,
-      "lows": 16
-    },
     {
       "date": "06/29",
       "highs": 0,
@@ -157,15 +152,14 @@
       "date": "07/29",
       "highs": 0,
       "lows": 1
+    },
+    {
+      "date": "07/30",
+      "highs": 0,
+      "lows": 11
     }
   ],
   "adr_series": [
-    {
-      "date": "04/28",
-      "adr": 136.0,
-      "adv": 44,
-      "dec": 36
-    },
     {
       "date": "04/29",
       "adr": 121.4,
@@ -174,61 +168,61 @@
     },
     {
       "date": "04/30",
-      "adr": 93.7,
+      "adr": 93.9,
       "adv": 15,
-      "dec": 62
+      "dec": 61
     },
     {
       "date": "05/04",
-      "adr": 100.0,
+      "adr": 100.3,
       "adv": 43,
       "dec": 36
     },
     {
       "date": "05/06",
-      "adr": 99.2,
+      "adr": 99.5,
       "adv": 29,
       "dec": 51
     },
     {
       "date": "05/07",
-      "adr": 98.2,
+      "adr": 98.5,
       "adv": 50,
       "dec": 29
     },
     {
       "date": "05/08",
-      "adr": 99.0,
+      "adr": 99.2,
       "adv": 37,
       "dec": 41
     },
     {
       "date": "05/11",
-      "adr": 93.1,
+      "adr": 93.3,
       "adv": 28,
       "dec": 47
     },
     {
       "date": "05/12",
-      "adr": 79.6,
+      "adr": 79.8,
       "adv": 19,
       "dec": 56
     },
     {
       "date": "05/13",
-      "adr": 75.6,
+      "adr": 75.8,
       "adv": 27,
       "dec": 52
     },
     {
       "date": "05/14",
-      "adr": 83.7,
+      "adr": 83.9,
       "adv": 63,
       "dec": 16
     },
     {
       "date": "05/15",
-      "adr": 70.2,
+      "adr": 70.3,
       "adv": 11,
       "dec": 69
     },
@@ -519,11 +513,17 @@
       "adr": 99.2,
       "adv": 38,
       "dec": 35
+    },
+    {
+      "date": "07/28",
+      "adr": 90.7,
+      "adv": 3,
+      "dec": 76
     }
   ],
   "adr_latest": {
-    "value": 99.2,
-    "adv": 38,
-    "dec": 35
+    "value": 90.7,
+    "adv": 3,
+    "dec": 76
   }
 }
