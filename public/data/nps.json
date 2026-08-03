@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-03 05:06 KST",
+  "updated_at": "2026-08-04 05:20 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -11,12 +11,28 @@
       "rank": 1
     },
     {
+      "name": "삼양식품",
+      "value": 11.01,
+      "change": 0,
+      "amount": "지분율 11.01%",
+      "rcept_dt": "2026-08-03",
+      "rank": 2
+    },
+    {
+      "name": "효성티앤씨",
+      "value": 10.54,
+      "change": 0,
+      "amount": "지분율 10.54%",
+      "rcept_dt": "2026-08-03",
+      "rank": 3
+    },
+    {
       "name": "현대해상",
       "value": 10.15,
       "change": 0.0,
       "amount": "지분율 10.15%",
       "rcept_dt": "2026-07-13",
-      "rank": 2
+      "rank": 4
     },
     {
       "name": "한섬",
@@ -24,15 +40,15 @@
       "change": 0.0,
       "amount": "지분율 10.09%",
       "rcept_dt": "2026-07-13",
-      "rank": 3
+      "rank": 5
     },
     {
       "name": "한화엔진",
-      "value": 10.06,
-      "change": 0.0,
-      "amount": "지분율 10.06%",
-      "rcept_dt": "2026-07-31",
-      "rank": 4
+      "value": 10.05,
+      "change": -0.01,
+      "amount": "지분율 10.05%",
+      "rcept_dt": "2026-08-03",
+      "rank": 6
     },
     {
       "name": "씨에스윈드",
@@ -40,15 +56,23 @@
       "change": 0.0,
       "amount": "지분율 10.03%",
       "rcept_dt": "2026-07-31",
-      "rank": 5
+      "rank": 7
     },
     {
       "name": "효성중공업",
-      "value": 10.01,
-      "change": 0.0,
-      "amount": "지분율 10.01%",
-      "rcept_dt": "2026-07-28",
-      "rank": 6
+      "value": 10.0,
+      "change": -0.01,
+      "amount": "지분율 10.00%",
+      "rcept_dt": "2026-08-03",
+      "rank": 8
+    },
+    {
+      "name": "한미약품",
+      "value": 9.87,
+      "change": 0,
+      "amount": "지분율 9.87%",
+      "rcept_dt": "2026-08-03",
+      "rank": 9
     },
     {
       "name": "금호석유화학",
@@ -56,7 +80,7 @@
       "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-07-31",
-      "rank": 7
+      "rank": 10
     },
     {
       "name": "파라다이스",
@@ -64,7 +88,7 @@
       "change": 0.0,
       "amount": "지분율 9.58%",
       "rcept_dt": "2026-07-23",
-      "rank": 8
+      "rank": 11
     },
     {
       "name": "롯데관광개발",
@@ -72,7 +96,7 @@
       "change": 0.0,
       "amount": "지분율 8.89%",
       "rcept_dt": "2026-07-23",
-      "rank": 9
+      "rank": 12
     },
     {
       "name": "RF머트리얼즈",
@@ -80,7 +104,7 @@
       "change": 0.0,
       "amount": "지분율 7.48%",
       "rcept_dt": "2026-07-01",
-      "rank": 10
+      "rank": 13
     },
     {
       "name": "피에스케이",
@@ -88,7 +112,7 @@
       "change": 0.0,
       "amount": "지분율 7.12%",
       "rcept_dt": "2026-07-01",
-      "rank": 11
+      "rank": 14
     },
     {
       "name": "동국제강",
@@ -96,7 +120,7 @@
       "change": 0.0,
       "amount": "지분율 6.13%",
       "rcept_dt": "2026-07-01",
-      "rank": 12
+      "rank": 15
     },
     {
       "name": "알지노믹스",
@@ -104,7 +128,7 @@
       "change": 0.0,
       "amount": "지분율 5.04%",
       "rcept_dt": "2026-07-01",
-      "rank": 13
+      "rank": 16
     },
     {
       "name": "씨엠티엑스",
@@ -112,7 +136,7 @@
       "change": 0.0,
       "amount": "지분율 5.03%",
       "rcept_dt": "2026-07-01",
-      "rank": 14
+      "rank": 17
     },
     {
       "name": "솔브레인",
@@ -120,7 +144,7 @@
       "change": 0.0,
       "amount": "지분율 5.02%",
       "rcept_dt": "2026-07-01",
-      "rank": 15
+      "rank": 18
     },
     {
       "name": "파인엠텍",
@@ -128,10 +152,50 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2026-07-01",
-      "rank": 16
+      "rank": 19
     }
   ],
   "changes": [
+    {
+      "name": "효성중공업",
+      "value": 10.0,
+      "prev": 10.01,
+      "change": -0.01,
+      "rcept_dt": "2026-08-03",
+      "is_new": false
+    },
+    {
+      "name": "한미약품",
+      "value": 9.87,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-08-03",
+      "is_new": true
+    },
+    {
+      "name": "효성티앤씨",
+      "value": 10.54,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-08-03",
+      "is_new": true
+    },
+    {
+      "name": "한화엔진",
+      "value": 10.05,
+      "prev": 10.06,
+      "change": -0.01,
+      "rcept_dt": "2026-08-03",
+      "is_new": false
+    },
+    {
+      "name": "삼양식품",
+      "value": 11.01,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-08-03",
+      "is_new": true
+    },
     {
       "name": "금호석유화학",
       "value": 9.77,
