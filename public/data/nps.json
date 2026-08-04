@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-04 05:20 KST",
+  "updated_at": "2026-08-05 05:19 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -13,7 +13,7 @@
     {
       "name": "삼양식품",
       "value": 11.01,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 11.01%",
       "rcept_dt": "2026-08-03",
       "rank": 2
@@ -21,7 +21,7 @@
     {
       "name": "효성티앤씨",
       "value": 10.54,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.54%",
       "rcept_dt": "2026-08-03",
       "rank": 3
@@ -45,7 +45,7 @@
     {
       "name": "한화엔진",
       "value": 10.05,
-      "change": -0.01,
+      "change": 0.0,
       "amount": "지분율 10.05%",
       "rcept_dt": "2026-08-03",
       "rank": 6
@@ -61,7 +61,7 @@
     {
       "name": "효성중공업",
       "value": 10.0,
-      "change": -0.01,
+      "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-08-03",
       "rank": 8
@@ -69,7 +69,7 @@
     {
       "name": "한미약품",
       "value": 9.87,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 9.87%",
       "rcept_dt": "2026-08-03",
       "rank": 9
