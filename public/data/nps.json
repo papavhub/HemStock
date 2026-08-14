@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-14 04:51 KST",
+  "updated_at": "2026-08-15 04:42 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -29,7 +29,7 @@
     {
       "name": "GS리테일",
       "value": 10.27,
-      "change": 0.28,
+      "change": 0.0,
       "amount": "지분율 10.27%",
       "rcept_dt": "2026-08-13",
       "rank": 4
@@ -45,7 +45,7 @@
     {
       "name": "NHN",
       "value": 10.12,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.12%",
       "rcept_dt": "2026-08-13",
       "rank": 6
@@ -93,7 +93,7 @@
     {
       "name": "한섬",
       "value": 9.77,
-      "change": -0.32,
+      "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-08-13",
       "rank": 12
