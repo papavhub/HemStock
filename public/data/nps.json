@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-01 08:04 KST",
+  "updated_at": "2026-09-02 06:30 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -12,19 +12,11 @@
     },
     {
       "name": "삼양식품",
-      "value": 11.01,
-      "change": 0.0,
-      "amount": "지분율 11.01%",
-      "rcept_dt": "2026-08-03",
+      "value": 11.2,
+      "change": 0.19,
+      "amount": "지분율 11.20%",
+      "rcept_dt": "2026-09-01",
       "rank": 2
-    },
-    {
-      "name": "효성티앤씨",
-      "value": 10.54,
-      "change": 0.0,
-      "amount": "지분율 10.54%",
-      "rcept_dt": "2026-08-03",
-      "rank": 3
     },
     {
       "name": "GS리테일",
@@ -32,7 +24,23 @@
       "change": 0.0,
       "amount": "지분율 10.27%",
       "rcept_dt": "2026-08-13",
+      "rank": 3
+    },
+    {
+      "name": "현대건설",
+      "value": 10.2,
+      "change": 0,
+      "amount": "지분율 10.20%",
+      "rcept_dt": "2026-09-01",
       "rank": 4
+    },
+    {
+      "name": "효성티앤씨",
+      "value": 10.17,
+      "change": -0.37,
+      "amount": "지분율 10.17%",
+      "rcept_dt": "2026-09-01",
+      "rank": 5
     },
     {
       "name": "현대해상",
@@ -40,14 +48,6 @@
       "change": 0.0,
       "amount": "지분율 10.15%",
       "rcept_dt": "2026-07-13",
-      "rank": 5
-    },
-    {
-      "name": "NHN",
-      "value": 10.12,
-      "change": 0.0,
-      "amount": "지분율 10.12%",
-      "rcept_dt": "2026-08-13",
       "rank": 6
     },
     {
@@ -83,12 +83,28 @@
       "rank": 10
     },
     {
+      "name": "LIG디펜스앤에어로스페이스",
+      "value": 9.98,
+      "change": 0,
+      "amount": "지분율 9.98%",
+      "rcept_dt": "2026-09-01",
+      "rank": 11
+    },
+    {
       "name": "대웅제약",
       "value": 9.95,
       "change": 0.0,
       "amount": "지분율 9.95%",
       "rcept_dt": "2026-08-21",
-      "rank": 11
+      "rank": 12
+    },
+    {
+      "name": "NHN",
+      "value": 9.9,
+      "change": -0.22,
+      "amount": "지분율 9.90%",
+      "rcept_dt": "2026-09-01",
+      "rank": 13
     },
     {
       "name": "대한유화",
@@ -96,7 +112,7 @@
       "change": 0.0,
       "amount": "지분율 9.89%",
       "rcept_dt": "2026-08-10",
-      "rank": 12
+      "rank": 14
     },
     {
       "name": "한미약품",
@@ -104,7 +120,7 @@
       "change": 0.0,
       "amount": "지분율 9.87%",
       "rcept_dt": "2026-08-03",
-      "rank": 13
+      "rank": 15
     },
     {
       "name": "한섬",
@@ -112,7 +128,7 @@
       "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-08-13",
-      "rank": 14
+      "rank": 16
     },
     {
       "name": "금호석유화학",
@@ -120,7 +136,7 @@
       "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-07-31",
-      "rank": 15
+      "rank": 17
     },
     {
       "name": "S-Oil",
@@ -128,7 +144,7 @@
       "change": 0.0,
       "amount": "지분율 9.66%",
       "rcept_dt": "2026-08-26",
-      "rank": 16
+      "rank": 18
     },
     {
       "name": "파라다이스",
@@ -136,7 +152,7 @@
       "change": 0.0,
       "amount": "지분율 9.58%",
       "rcept_dt": "2026-07-23",
-      "rank": 17
+      "rank": 19
     },
     {
       "name": "한화엔진",
@@ -144,7 +160,15 @@
       "change": 0.0,
       "amount": "지분율 9.44%",
       "rcept_dt": "2026-08-10",
-      "rank": 18
+      "rank": 20
+    },
+    {
+      "name": "DL",
+      "value": 9.36,
+      "change": 0,
+      "amount": "지분율 9.36%",
+      "rcept_dt": "2026-09-01",
+      "rank": 21
     },
     {
       "name": "롯데관광개발",
@@ -152,7 +176,7 @@
       "change": 0.0,
       "amount": "지분율 8.89%",
       "rcept_dt": "2026-07-23",
-      "rank": 19
+      "rank": 22
     },
     {
       "name": "RF머트리얼즈",
@@ -160,7 +184,7 @@
       "change": 0.0,
       "amount": "지분율 7.48%",
       "rcept_dt": "2026-07-01",
-      "rank": 20
+      "rank": 23
     },
     {
       "name": "피에스케이",
@@ -168,7 +192,7 @@
       "change": 0.0,
       "amount": "지분율 7.12%",
       "rcept_dt": "2026-07-01",
-      "rank": 21
+      "rank": 24
     },
     {
       "name": "동국제강",
@@ -176,7 +200,7 @@
       "change": 0.0,
       "amount": "지분율 6.13%",
       "rcept_dt": "2026-07-01",
-      "rank": 22
+      "rank": 25
     },
     {
       "name": "알지노믹스",
@@ -184,7 +208,7 @@
       "change": 0.0,
       "amount": "지분율 5.04%",
       "rcept_dt": "2026-07-01",
-      "rank": 23
+      "rank": 26
     },
     {
       "name": "씨엠티엑스",
@@ -192,7 +216,7 @@
       "change": 0.0,
       "amount": "지분율 5.03%",
       "rcept_dt": "2026-07-01",
-      "rank": 24
+      "rank": 27
     },
     {
       "name": "솔브레인",
@@ -200,7 +224,7 @@
       "change": 0.0,
       "amount": "지분율 5.02%",
       "rcept_dt": "2026-07-01",
-      "rank": 25
+      "rank": 28
     },
     {
       "name": "파인엠텍",
@@ -208,10 +232,58 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2026-07-01",
-      "rank": 26
+      "rank": 29
     }
   ],
   "changes": [
+    {
+      "name": "NHN",
+      "value": 9.9,
+      "prev": 10.12,
+      "change": -0.22,
+      "rcept_dt": "2026-09-01",
+      "is_new": false
+    },
+    {
+      "name": "LIG디펜스앤에어로스페이스",
+      "value": 9.98,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-09-01",
+      "is_new": true
+    },
+    {
+      "name": "현대건설",
+      "value": 10.2,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-09-01",
+      "is_new": true
+    },
+    {
+      "name": "DL",
+      "value": 9.36,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-09-01",
+      "is_new": true
+    },
+    {
+      "name": "효성티앤씨",
+      "value": 10.17,
+      "prev": 10.54,
+      "change": -0.37,
+      "rcept_dt": "2026-09-01",
+      "is_new": false
+    },
+    {
+      "name": "삼양식품",
+      "value": 11.2,
+      "prev": 11.01,
+      "change": 0.19,
+      "rcept_dt": "2026-09-01",
+      "is_new": false
+    },
     {
       "name": "진성티이씨",
       "value": 9.99,
