@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-15 07:12 KST",
+  "updated_at": "2026-09-16 06:50 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -93,7 +93,7 @@
     {
       "name": "GS리테일",
       "value": 9.94,
-      "change": -0.33,
+      "change": 0.0,
       "amount": "지분율 9.94%",
       "rcept_dt": "2026-09-14",
       "rank": 12
@@ -141,7 +141,7 @@
     {
       "name": "S-Oil",
       "value": 9.7,
-      "change": 0.04,
+      "change": 0.0,
       "amount": "지분율 9.70%",
       "rcept_dt": "2026-09-14",
       "rank": 18
@@ -157,7 +157,7 @@
     {
       "name": "대덕전자",
       "value": 9.57,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 9.57%",
       "rcept_dt": "2026-09-14",
       "rank": 20
