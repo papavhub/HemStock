@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-29 08:36 KST",
+  "updated_at": "2026-09-30 07:46 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -51,12 +51,20 @@
       "rank": 6
     },
     {
+      "name": "한미약품",
+      "value": 10.04,
+      "change": 0.17,
+      "amount": "지분율 10.04%",
+      "rcept_dt": "2026-09-29",
+      "rank": 7
+    },
+    {
       "name": "씨에스윈드",
       "value": 10.03,
       "change": 0.0,
       "amount": "지분율 10.03%",
       "rcept_dt": "2026-07-31",
-      "rank": 7
+      "rank": 8
     },
     {
       "name": "GS건설",
@@ -64,7 +72,7 @@
       "change": 0.0,
       "amount": "지분율 10.02%",
       "rcept_dt": "2026-08-10",
-      "rank": 8
+      "rank": 9
     },
     {
       "name": "효성중공업",
@@ -72,7 +80,7 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-08-03",
-      "rank": 9
+      "rank": 10
     },
     {
       "name": "진성티이씨",
@@ -80,7 +88,7 @@
       "change": 0.0,
       "amount": "지분율 9.99%",
       "rcept_dt": "2026-08-26",
-      "rank": 10
+      "rank": 11
     },
     {
       "name": "LIG디펜스앤에어로스페이스",
@@ -88,7 +96,7 @@
       "change": 0.0,
       "amount": "지분율 9.98%",
       "rcept_dt": "2026-09-01",
-      "rank": 11
+      "rank": 12
     },
     {
       "name": "대웅제약",
@@ -96,7 +104,7 @@
       "change": 0.0,
       "amount": "지분율 9.95%",
       "rcept_dt": "2026-08-21",
-      "rank": 12
+      "rank": 13
     },
     {
       "name": "GS리테일",
@@ -104,7 +112,7 @@
       "change": 0.0,
       "amount": "지분율 9.94%",
       "rcept_dt": "2026-09-14",
-      "rank": 13
+      "rank": 14
     },
     {
       "name": "NHN",
@@ -112,14 +120,6 @@
       "change": 0.0,
       "amount": "지분율 9.90%",
       "rcept_dt": "2026-09-01",
-      "rank": 14
-    },
-    {
-      "name": "한미약품",
-      "value": 9.87,
-      "change": 0.0,
-      "amount": "지분율 9.87%",
-      "rcept_dt": "2026-08-03",
       "rank": 15
     },
     {
@@ -260,6 +260,14 @@
     }
   ],
   "changes": [
+    {
+      "name": "한미약품",
+      "value": 10.04,
+      "prev": 9.87,
+      "change": 0.17,
+      "rcept_dt": "2026-09-29",
+      "is_new": false
+    },
     {
       "name": "아모레퍼시픽",
       "value": 9.56,
@@ -554,70 +562,6 @@
       "prev": null,
       "change": null,
       "rcept_dt": "2026-07-13",
-      "is_new": true
-    },
-    {
-      "name": "코스메카코리아",
-      "value": 12.98,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "RF머트리얼즈",
-      "value": 7.48,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "피에스케이",
-      "value": 7.12,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "동국제강",
-      "value": 6.13,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "알지노믹스",
-      "value": 5.04,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "씨엠티엑스",
-      "value": 5.03,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "솔브레인",
-      "value": 5.02,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
-      "is_new": true
-    },
-    {
-      "name": "파인엠텍",
-      "value": 5.0,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-01",
       "is_new": true
     }
   ]
