@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-01 07:44 KST",
+  "updated_at": "2026-10-02 07:57 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -77,7 +77,7 @@
     {
       "name": "이수페타시스",
       "value": 10.02,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.02%",
       "rcept_dt": "2026-09-30",
       "rank": 10
@@ -117,7 +117,7 @@
     {
       "name": "LIG디펜스앤에어로스페이스",
       "value": 9.93,
-      "change": -0.05,
+      "change": 0.0,
       "amount": "지분율 9.93%",
       "rcept_dt": "2026-09-30",
       "rank": 15
