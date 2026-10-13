@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-13 10:01 KST",
+  "updated_at": "2026-10-14 08:09 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -245,7 +245,7 @@
     {
       "name": "NC",
       "value": 10.14,
-      "change": 0.38,
+      "change": 0.0,
       "amount": "지분율 10.14%",
       "rcept_dt": "2026-10-12",
       "rank": 31
@@ -261,7 +261,7 @@
     {
       "name": "이수페타시스",
       "value": 10.0,
-      "change": 0.02,
+      "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-10-12",
       "rank": 33
@@ -269,7 +269,7 @@
     {
       "name": "비에이치",
       "value": 9.99,
-      "change": -0.04,
+      "change": 0.0,
       "amount": "지분율 9.99%",
       "rcept_dt": "2026-10-12",
       "rank": 34
@@ -285,7 +285,7 @@
     {
       "name": "대한항공",
       "value": 9.97,
-      "change": -0.03,
+      "change": 0.0,
       "amount": "지분율 9.97%",
       "rcept_dt": "2026-10-12",
       "rank": 36
