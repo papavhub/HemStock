@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-20 07:41 KST",
+  "updated_at": "2026-10-21 06:59 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -219,11 +219,11 @@
       "rank": 27
     },
     {
-      "name": "키움증권",
-      "value": 10.19,
-      "change": 0.0,
-      "amount": "지분율 10.19%",
-      "rcept_dt": "2026-10-06",
+      "name": "팬오션",
+      "value": 10.2,
+      "change": 0,
+      "amount": "지분율 10.20%",
+      "rcept_dt": "2026-10-20",
       "rank": 28
     },
     {
@@ -251,12 +251,20 @@
       "rank": 31
     },
     {
+      "name": "진성티이씨",
+      "value": 10.1,
+      "change": 0.11,
+      "amount": "지분율 10.10%",
+      "rcept_dt": "2026-10-20",
+      "rank": 32
+    },
+    {
       "name": "SNT모티브",
       "value": 10.02,
       "change": 0.0,
       "amount": "지분율 10.02%",
       "rcept_dt": "2026-10-15",
-      "rank": 32
+      "rank": 33
     },
     {
       "name": "효성중공업",
@@ -264,7 +272,7 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-08-03",
-      "rank": 33
+      "rank": 34
     },
     {
       "name": "이수페타시스",
@@ -272,7 +280,7 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-10-12",
-      "rank": 34
+      "rank": 35
     },
     {
       "name": "비에이치",
@@ -280,22 +288,14 @@
       "change": 0.0,
       "amount": "지분율 9.99%",
       "rcept_dt": "2026-10-12",
-      "rank": 35
-    },
-    {
-      "name": "진성티이씨",
-      "value": 9.99,
-      "change": 0.0,
-      "amount": "지분율 9.99%",
-      "rcept_dt": "2026-08-26",
       "rank": 36
     },
     {
-      "name": "대한항공",
+      "name": "키움증권",
       "value": 9.97,
-      "change": 0.0,
+      "change": -0.22,
       "amount": "지분율 9.97%",
-      "rcept_dt": "2026-10-15",
+      "rcept_dt": "2026-10-20",
       "rank": 37
     },
     {
@@ -315,12 +315,20 @@
       "rank": 39
     },
     {
+      "name": "대한항공",
+      "value": 9.93,
+      "change": -0.04,
+      "amount": "지분율 9.93%",
+      "rcept_dt": "2026-10-20",
+      "rank": 40
+    },
+    {
       "name": "LIG디펜스앤에어로스페이스",
       "value": 9.93,
       "change": 0.0,
       "amount": "지분율 9.93%",
       "rcept_dt": "2026-09-30",
-      "rank": 40
+      "rank": 41
     },
     {
       "name": "NHN",
@@ -328,7 +336,7 @@
       "change": 0.0,
       "amount": "지분율 9.90%",
       "rcept_dt": "2026-09-01",
-      "rank": 41
+      "rank": 42
     },
     {
       "name": "아모레퍼시픽",
@@ -336,7 +344,7 @@
       "change": 0.0,
       "amount": "지분율 9.90%",
       "rcept_dt": "2026-10-06",
-      "rank": 42
+      "rank": 43
     },
     {
       "name": "S-Oil",
@@ -344,7 +352,7 @@
       "change": 0.0,
       "amount": "지분율 9.88%",
       "rcept_dt": "2026-10-06",
-      "rank": 43
+      "rank": 44
     },
     {
       "name": "한섬",
@@ -352,7 +360,7 @@
       "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-08-13",
-      "rank": 44
+      "rank": 45
     },
     {
       "name": "금호석유화학",
@@ -360,7 +368,7 @@
       "change": 0.0,
       "amount": "지분율 9.77%",
       "rcept_dt": "2026-07-31",
-      "rank": 45
+      "rank": 46
     },
     {
       "name": "CJ",
@@ -368,7 +376,7 @@
       "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-06",
-      "rank": 46
+      "rank": 47
     },
     {
       "name": "파라다이스",
@@ -376,7 +384,7 @@
       "change": 0.0,
       "amount": "지분율 9.58%",
       "rcept_dt": "2026-07-23",
-      "rank": 47
+      "rank": 48
     },
     {
       "name": "대덕전자",
@@ -384,7 +392,7 @@
       "change": 0.0,
       "amount": "지분율 9.57%",
       "rcept_dt": "2026-09-14",
-      "rank": 48
+      "rank": 49
     },
     {
       "name": "한화엔진",
@@ -392,7 +400,7 @@
       "change": 0.0,
       "amount": "지분율 9.44%",
       "rcept_dt": "2026-08-10",
-      "rank": 49
+      "rank": 50
     },
     {
       "name": "롯데관광개발",
@@ -400,7 +408,7 @@
       "change": 0.0,
       "amount": "지분율 8.89%",
       "rcept_dt": "2026-07-23",
-      "rank": 50
+      "rank": 51
     },
     {
       "name": "두산",
@@ -408,7 +416,7 @@
       "change": 0.0,
       "amount": "지분율 8.05%",
       "rcept_dt": "2026-10-07",
-      "rank": 51
+      "rank": 52
     },
     {
       "name": "RF머트리얼즈",
@@ -416,7 +424,7 @@
       "change": 0.0,
       "amount": "지분율 7.48%",
       "rcept_dt": "2026-07-01",
-      "rank": 52
+      "rank": 53
     },
     {
       "name": "피에스케이",
@@ -424,7 +432,7 @@
       "change": 0.0,
       "amount": "지분율 7.12%",
       "rcept_dt": "2026-07-01",
-      "rank": 53
+      "rank": 54
     },
     {
       "name": "동국제강",
@@ -432,7 +440,7 @@
       "change": 0.0,
       "amount": "지분율 6.13%",
       "rcept_dt": "2026-07-01",
-      "rank": 54
+      "rank": 55
     },
     {
       "name": "알지노믹스",
@@ -440,7 +448,7 @@
       "change": 0.0,
       "amount": "지분율 5.04%",
       "rcept_dt": "2026-07-01",
-      "rank": 55
+      "rank": 56
     },
     {
       "name": "씨엠티엑스",
@@ -448,7 +456,7 @@
       "change": 0.0,
       "amount": "지분율 5.03%",
       "rcept_dt": "2026-07-01",
-      "rank": 56
+      "rank": 57
     },
     {
       "name": "솔브레인",
@@ -456,7 +464,7 @@
       "change": 0.0,
       "amount": "지분율 5.02%",
       "rcept_dt": "2026-07-01",
-      "rank": 57
+      "rank": 58
     },
     {
       "name": "파인엠텍",
@@ -464,10 +472,42 @@
       "change": 0.0,
       "amount": "지분율 5.00%",
       "rcept_dt": "2026-07-01",
-      "rank": 58
+      "rank": 59
     }
   ],
   "changes": [
+    {
+      "name": "키움증권",
+      "value": 9.97,
+      "prev": 10.19,
+      "change": -0.22,
+      "rcept_dt": "2026-10-20",
+      "is_new": false
+    },
+    {
+      "name": "대한항공",
+      "value": 9.93,
+      "prev": 9.97,
+      "change": -0.04,
+      "rcept_dt": "2026-10-20",
+      "is_new": false
+    },
+    {
+      "name": "팬오션",
+      "value": 10.2,
+      "prev": null,
+      "change": null,
+      "rcept_dt": "2026-10-20",
+      "is_new": true
+    },
+    {
+      "name": "진성티이씨",
+      "value": 10.1,
+      "prev": 9.99,
+      "change": 0.11,
+      "rcept_dt": "2026-10-20",
+      "is_new": false
+    },
     {
       "name": "대한항공",
       "value": 9.97,
