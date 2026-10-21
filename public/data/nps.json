@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-21 06:59 KST",
+  "updated_at": "2026-10-22 07:02 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -221,7 +221,7 @@
     {
       "name": "팬오션",
       "value": 10.2,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.20%",
       "rcept_dt": "2026-10-20",
       "rank": 28
@@ -253,7 +253,7 @@
     {
       "name": "진성티이씨",
       "value": 10.1,
-      "change": 0.11,
+      "change": 0.0,
       "amount": "지분율 10.10%",
       "rcept_dt": "2026-10-20",
       "rank": 32
@@ -293,7 +293,7 @@
     {
       "name": "키움증권",
       "value": 9.97,
-      "change": -0.22,
+      "change": 0.0,
       "amount": "지분율 9.97%",
       "rcept_dt": "2026-10-20",
       "rank": 37
@@ -317,7 +317,7 @@
     {
       "name": "대한항공",
       "value": 9.93,
-      "change": -0.04,
+      "change": 0.0,
       "amount": "지분율 9.93%",
       "rcept_dt": "2026-10-20",
       "rank": 40
@@ -1122,30 +1122,6 @@
       "prev": 9.98,
       "change": 0.03,
       "rcept_dt": "2026-07-28",
-      "is_new": false
-    },
-    {
-      "name": "파라다이스",
-      "value": 9.58,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-23",
-      "is_new": true
-    },
-    {
-      "name": "효성중공업",
-      "value": 9.98,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-23",
-      "is_new": true
-    },
-    {
-      "name": "롯데관광개발",
-      "value": 8.89,
-      "prev": 10.01,
-      "change": -1.12,
-      "rcept_dt": "2026-07-23",
       "is_new": false
     }
   ]
