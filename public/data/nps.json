@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-23 06:59 KST",
+  "updated_at": "2026-10-24 06:46 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -269,7 +269,7 @@
     {
       "name": "빙그레",
       "value": 10.02,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.02%",
       "rcept_dt": "2026-10-22",
       "rank": 34
