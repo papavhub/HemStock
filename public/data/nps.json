@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-26 06:19 KST",
+  "updated_at": "2026-10-27 07:56 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -1131,14 +1131,6 @@
       "change": null,
       "rcept_dt": "2026-07-31",
       "is_new": true
-    },
-    {
-      "name": "효성중공업",
-      "value": 10.01,
-      "prev": 9.98,
-      "change": 0.03,
-      "rcept_dt": "2026-07-28",
-      "is_new": false
     }
   ]
 }
