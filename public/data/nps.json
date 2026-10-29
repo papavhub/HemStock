@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-29 07:55 KST",
+  "updated_at": "2026-10-30 08:03 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -293,7 +293,7 @@
     {
       "name": "삼성E&A",
       "value": 10.0,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-10-28",
       "rank": 37
@@ -381,7 +381,7 @@
     {
       "name": "S-Oil",
       "value": 9.63,
-      "change": -0.25,
+      "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-28",
       "rank": 48
@@ -429,7 +429,7 @@
     {
       "name": "두산",
       "value": 7.75,
-      "change": -0.3,
+      "change": 0.0,
       "amount": "지분율 7.75%",
       "rcept_dt": "2026-10-28",
       "rank": 54
@@ -1138,30 +1138,6 @@
       "prev": null,
       "change": null,
       "rcept_dt": "2026-08-03",
-      "is_new": true
-    },
-    {
-      "name": "금호석유화학",
-      "value": 9.77,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-31",
-      "is_new": true
-    },
-    {
-      "name": "한화엔진",
-      "value": 10.06,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-31",
-      "is_new": true
-    },
-    {
-      "name": "씨에스윈드",
-      "value": 10.03,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-07-31",
       "is_new": true
     }
   ]
