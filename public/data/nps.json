@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-01 07:04 KST",
+  "updated_at": "2026-11-02 07:31 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -1138,46 +1138,6 @@
       "prev": null,
       "change": null,
       "rcept_dt": "2026-08-10",
-      "is_new": true
-    },
-    {
-      "name": "효성중공업",
-      "value": 10.0,
-      "prev": 10.01,
-      "change": -0.01,
-      "rcept_dt": "2026-08-03",
-      "is_new": false
-    },
-    {
-      "name": "한미약품",
-      "value": 9.87,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-03",
-      "is_new": true
-    },
-    {
-      "name": "효성티앤씨",
-      "value": 10.54,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-03",
-      "is_new": true
-    },
-    {
-      "name": "한화엔진",
-      "value": 10.05,
-      "prev": 10.06,
-      "change": -0.01,
-      "rcept_dt": "2026-08-03",
-      "is_new": false
-    },
-    {
-      "name": "삼양식품",
-      "value": 11.01,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-03",
       "is_new": true
     }
   ]
