@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-02 07:31 KST",
+  "updated_at": "2026-11-03 10:24 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -91,12 +91,20 @@
       "rank": 11
     },
     {
+      "name": "삼양식품",
+      "value": 11.37,
+      "change": 0.22,
+      "amount": "지분율 11.37%",
+      "rcept_dt": "2026-11-02",
+      "rank": 12
+    },
+    {
       "name": "신세계",
       "value": 11.34,
       "change": 0.0,
       "amount": "지분율 11.34%",
       "rcept_dt": "2026-10-06",
-      "rank": 12
+      "rank": 13
     },
     {
       "name": "대한유화",
@@ -104,21 +112,13 @@
       "change": 0.0,
       "amount": "지분율 11.29%",
       "rcept_dt": "2026-10-06",
-      "rank": 13
+      "rank": 14
     },
     {
       "name": "씨에스윈드",
       "value": 11.19,
       "change": 0.0,
       "amount": "지분율 11.19%",
-      "rcept_dt": "2026-10-06",
-      "rank": 14
-    },
-    {
-      "name": "삼양식품",
-      "value": 11.15,
-      "change": 0.0,
-      "amount": "지분율 11.15%",
       "rcept_dt": "2026-10-06",
       "rank": 15
     },
@@ -500,6 +500,14 @@
     }
   ],
   "changes": [
+    {
+      "name": "삼양식품",
+      "value": 11.37,
+      "prev": 11.15,
+      "change": 0.22,
+      "rcept_dt": "2026-11-02",
+      "is_new": false
+    },
     {
       "name": "SNT모티브",
       "value": 10.0,
