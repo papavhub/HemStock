@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-04 08:48 KST",
+  "updated_at": "2026-11-05 09:02 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -203,20 +203,12 @@
       "rank": 25
     },
     {
-      "name": "팬오션",
-      "value": 10.2,
-      "change": 0.0,
-      "amount": "지분율 10.20%",
-      "rcept_dt": "2026-10-20",
-      "rank": 26
-    },
-    {
       "name": "DL",
       "value": 10.16,
       "change": 0.0,
       "amount": "지분율 10.16%",
       "rcept_dt": "2026-10-06",
-      "rank": 27
+      "rank": 26
     },
     {
       "name": "한미약품",
@@ -224,7 +216,7 @@
       "change": 0.0,
       "amount": "지분율 10.15%",
       "rcept_dt": "2026-10-06",
-      "rank": 28
+      "rank": 27
     },
     {
       "name": "NC",
@@ -232,7 +224,7 @@
       "change": 0.0,
       "amount": "지분율 10.14%",
       "rcept_dt": "2026-10-12",
-      "rank": 29
+      "rank": 28
     },
     {
       "name": "진성티이씨",
@@ -240,6 +232,14 @@
       "change": 0.0,
       "amount": "지분율 10.10%",
       "rcept_dt": "2026-10-20",
+      "rank": 29
+    },
+    {
+      "name": "팬오션",
+      "value": 10.05,
+      "change": -0.15,
+      "amount": "지분율 10.05%",
+      "rcept_dt": "2026-11-04",
       "rank": 30
     },
     {
@@ -387,12 +387,20 @@
       "rank": 48
     },
     {
+      "name": "대덕전자",
+      "value": 9.65,
+      "change": 0.08,
+      "amount": "지분율 9.65%",
+      "rcept_dt": "2026-11-04",
+      "rank": 49
+    },
+    {
       "name": "S-Oil",
       "value": 9.63,
       "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-28",
-      "rank": 49
+      "rank": 50
     },
     {
       "name": "CJ",
@@ -400,7 +408,7 @@
       "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-06",
-      "rank": 50
+      "rank": 51
     },
     {
       "name": "파라다이스",
@@ -408,14 +416,6 @@
       "change": 0.0,
       "amount": "지분율 9.58%",
       "rcept_dt": "2026-07-23",
-      "rank": 51
-    },
-    {
-      "name": "대덕전자",
-      "value": 9.57,
-      "change": 0.0,
-      "amount": "지분율 9.57%",
-      "rcept_dt": "2026-09-14",
       "rank": 52
     },
     {
@@ -500,6 +500,22 @@
     }
   ],
   "changes": [
+    {
+      "name": "팬오션",
+      "value": 10.05,
+      "prev": 10.2,
+      "change": -0.15,
+      "rcept_dt": "2026-11-04",
+      "is_new": false
+    },
+    {
+      "name": "대덕전자",
+      "value": 9.65,
+      "prev": 9.57,
+      "change": 0.08,
+      "rcept_dt": "2026-11-04",
+      "is_new": false
+    },
     {
       "name": "삼양식품",
       "value": 11.37,
