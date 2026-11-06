@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-06 08:53 KST",
+  "updated_at": "2026-11-07 08:35 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -205,7 +205,7 @@
     {
       "name": "현대엘리베이터",
       "value": 10.19,
-      "change": 0,
+      "change": 0.0,
       "amount": "지분율 10.19%",
       "rcept_dt": "2026-11-05",
       "rank": 26
