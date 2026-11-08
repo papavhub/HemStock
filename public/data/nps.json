@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08 07:26 KST",
+  "updated_at": "2026-11-09 07:36 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -1147,38 +1147,6 @@
       "change": 0.28,
       "rcept_dt": "2026-08-13",
       "is_new": false
-    },
-    {
-      "name": "GS리테일",
-      "value": 9.99,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-10",
-      "is_new": true
-    },
-    {
-      "name": "대한유화",
-      "value": 9.89,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-10",
-      "is_new": true
-    },
-    {
-      "name": "한화엔진",
-      "value": 9.44,
-      "prev": 10.05,
-      "change": -0.61,
-      "rcept_dt": "2026-08-10",
-      "is_new": false
-    },
-    {
-      "name": "GS건설",
-      "value": 10.02,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-10",
-      "is_new": true
     }
   ]
 }
