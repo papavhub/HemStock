@@ -63,7 +63,7 @@ const HELP = {
   adr:
     '국내 증시 ADR(등락비율) — KOSPI 주요 80종목 중 상승종목수 / 하락종목수 × 100의 10일 이동평균. 75 이하는 단기 과매도(반등 탐색 구간), 120 이상은 과매수(단기 차익실현 구간). 지수 방향과 ADR 방향이 엇갈리면 추세 이상 신호. 출처: Yahoo Finance (yfinance)',
   buffett:
-    '버핏 지수 — 미국 전체 주식 시가총액(Wilshire 5000) / 명목 GDP × 100%. 워런 버핏이 가장 선호하는 장기 밸류에이션 지표. 80% 이하 저평가, 100~120% 적정, 150%↑ 고평가, 200%↑ 극도 과열. 2021년 버블 당시 약 207% 기록. 출처: FRED (Wilshire 5000 Total Market Full Cap + US GDP)',
+    '버핏 지수 — 미국 전체 주식 시가총액(Wilshire 5000) / 명목 GDP × 100%. 워런 버핏이 가장 선호하는 장기 밸류에이션 지표. 80% 이하 저평가, 100~120% 적정, 150%↑ 고평가, 200%↑ 극도 과열. 2021년 버블 당시 약 207% 기록. 출처: World Bank — Market capitalization of listed domestic companies (% of GDP), 미국 (연간). ※ FRED가 Wilshire 5000 지수를 2024-06-03 자로 삭제해 2026-11부터 World Bank로 대체',
   credit:
     '투자자예탁금 & 신용융자잔고 — 예탁금(고객이 증권사에 맡긴 현금)은 잠재 매수 실탄, 융자잔고(빚내서 투자)는 레버리지 과열 지표. 융자↑·예탁금↓ = 빚투 과열(하락 리스크 증가). 융자↓·예탁금↑ = 대기 자금 풍부(상승 에너지). 출처: 한국은행 ECOS',
 }
@@ -1871,13 +1871,13 @@ function BuffettWidget() {
 
   return (
     <Widget title="버핏 지수 (미국)" badge={label} badgeColor={badgeColor}
-      helpKey="buffett" source="FRED Wilshire5000 + GDP" sourceUrl="https://fred.stlouisfed.org/series/WILL5000INDFC">
+      helpKey="buffett" source="World Bank 시총/GDP" sourceUrl="https://data.worldbank.org/indicator/CM.MKT.LCAP.GD.ZS?locations=US">
       <InfoBox>
         <span style={{ color: C.accent }}>미국 전체 시총 / 명목 GDP</span>.{' '}
         <span style={{ color: C.green }}>80% 이하 저평가</span> →{' '}
         <span style={{ color: C.yellow }}>120% 이상 고평가</span> →{' '}
         <span style={{ color: C.red }}>200%↑ 극도 과열</span>.
-        분기 데이터 기준.
+        연간 데이터 기준(약 1년 지연).
       </InfoBox>
       {loading ? <Spinner /> : error && !buf ? (
         <ApiError msg={error} onRetry={refetch} />
@@ -2030,6 +2030,9 @@ function CreditWidget() {
         <span style={{ color: C.accent }}>예탁금↑ = 매수 실탄 풍부</span>,{' '}
         <span style={{ color: C.red }}>융자잔고↑ = 빚투 과열(하락 리스크)</span>.
         월별 데이터, 조원 단위.
+        {creditLatest == null && (
+          <><br /><span style={{ color: C.muted }}>신용융자잔고는 현재 공개 데이터 소스가 없어 표시되지 않습니다. 예탁금은 한국은행 ECOS(901Y056) 기준.</span></>
+        )}
       </InfoBox>
       {loading ? <Spinner /> : error && !data ? (
         <ApiError msg={error} onRetry={refetch} />
