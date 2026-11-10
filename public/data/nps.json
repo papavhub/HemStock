@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10 10:48 KST",
+  "updated_at": "2026-11-11 08:50 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -245,7 +245,7 @@
     {
       "name": "대한항공",
       "value": 10.06,
-      "change": 0.13,
+      "change": 0.0,
       "amount": "지분율 10.06%",
       "rcept_dt": "2026-11-10",
       "rank": 31
@@ -253,7 +253,7 @@
     {
       "name": "효성티앤씨",
       "value": 10.05,
-      "change": 0.05,
+      "change": 0.0,
       "amount": "지분율 10.05%",
       "rcept_dt": "2026-11-10",
       "rank": 32
@@ -269,7 +269,7 @@
     {
       "name": "NHN",
       "value": 10.01,
-      "change": 0.11,
+      "change": 0.0,
       "amount": "지분율 10.01%",
       "rcept_dt": "2026-11-10",
       "rank": 34
@@ -277,7 +277,7 @@
     {
       "name": "파라다이스",
       "value": 10.01,
-      "change": 0.43,
+      "change": 0.0,
       "amount": "지분율 10.01%",
       "rcept_dt": "2026-11-10",
       "rank": 35
@@ -333,7 +333,7 @@
     {
       "name": "팬오션",
       "value": 9.97,
-      "change": -0.08,
+      "change": 0.0,
       "amount": "지분율 9.97%",
       "rcept_dt": "2026-11-10",
       "rank": 42

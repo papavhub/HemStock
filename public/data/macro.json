@@ -1,33 +1,459 @@
 {
-  "updated_at": "2026-11-10 10:48 KST",
-  "source": "FRED (St. Louis Fed) + 한국은행 ECOS",
+  "updated_at": "2026-11-11 08:50 KST",
+  "source": "FRED (St. Louis Fed) + World Bank + 한국은행 ECOS",
   "hy_spread": {
-    "series": [],
-    "latest": null,
-    "prev": null,
-    "change": null,
-    "change_pct": null
+    "series": [
+      {
+        "date": "07-07",
+        "value": 2.67
+      },
+      {
+        "date": "07-08",
+        "value": 2.7
+      },
+      {
+        "date": "07-09",
+        "value": 2.7
+      },
+      {
+        "date": "07-10",
+        "value": 2.69
+      },
+      {
+        "date": "07-13",
+        "value": 2.69
+      },
+      {
+        "date": "07-14",
+        "value": 2.72
+      },
+      {
+        "date": "07-15",
+        "value": 2.71
+      },
+      {
+        "date": "07-16",
+        "value": 2.71
+      },
+      {
+        "date": "07-17",
+        "value": 2.73
+      },
+      {
+        "date": "07-20",
+        "value": 2.69
+      },
+      {
+        "date": "07-21",
+        "value": 2.69
+      },
+      {
+        "date": "07-22",
+        "value": 2.68
+      },
+      {
+        "date": "07-23",
+        "value": 2.77
+      },
+      {
+        "date": "07-24",
+        "value": 2.79
+      },
+      {
+        "date": "07-27",
+        "value": 2.81
+      },
+      {
+        "date": "07-28",
+        "value": 2.84
+      },
+      {
+        "date": "07-29",
+        "value": 2.87
+      },
+      {
+        "date": "07-30",
+        "value": 2.84
+      },
+      {
+        "date": "07-31",
+        "value": 2.85
+      },
+      {
+        "date": "08-03",
+        "value": 2.78
+      },
+      {
+        "date": "08-04",
+        "value": 2.73
+      },
+      {
+        "date": "08-05",
+        "value": 2.75
+      },
+      {
+        "date": "08-06",
+        "value": 2.71
+      },
+      {
+        "date": "08-07",
+        "value": 2.7
+      },
+      {
+        "date": "08-10",
+        "value": 2.7
+      },
+      {
+        "date": "08-11",
+        "value": 2.72
+      },
+      {
+        "date": "08-12",
+        "value": 2.71
+      },
+      {
+        "date": "08-13",
+        "value": 2.71
+      },
+      {
+        "date": "08-14",
+        "value": 2.67
+      },
+      {
+        "date": "08-17",
+        "value": 2.7
+      },
+      {
+        "date": "08-18",
+        "value": 2.75
+      },
+      {
+        "date": "08-19",
+        "value": 2.73
+      },
+      {
+        "date": "08-20",
+        "value": 2.75
+      },
+      {
+        "date": "08-21",
+        "value": 2.7
+      },
+      {
+        "date": "08-24",
+        "value": 2.69
+      },
+      {
+        "date": "08-25",
+        "value": 2.7
+      },
+      {
+        "date": "08-26",
+        "value": 2.67
+      },
+      {
+        "date": "08-27",
+        "value": 2.63
+      },
+      {
+        "date": "08-28",
+        "value": 2.6
+      },
+      {
+        "date": "08-31",
+        "value": 2.63
+      },
+      {
+        "date": "09-01",
+        "value": 2.65
+      },
+      {
+        "date": "09-02",
+        "value": 2.66
+      },
+      {
+        "date": "09-03",
+        "value": 2.65
+      },
+      {
+        "date": "09-04",
+        "value": 2.68
+      },
+      {
+        "date": "09-07",
+        "value": 2.68
+      },
+      {
+        "date": "09-08",
+        "value": 2.67
+      },
+      {
+        "date": "09-09",
+        "value": 2.71
+      },
+      {
+        "date": "09-10",
+        "value": 2.7
+      },
+      {
+        "date": "09-11",
+        "value": 2.65
+      },
+      {
+        "date": "09-14",
+        "value": 2.71
+      },
+      {
+        "date": "09-15",
+        "value": 2.76
+      },
+      {
+        "date": "09-16",
+        "value": 2.7
+      },
+      {
+        "date": "09-17",
+        "value": 2.7
+      },
+      {
+        "date": "09-18",
+        "value": 2.68
+      },
+      {
+        "date": "09-21",
+        "value": 2.66
+      },
+      {
+        "date": "09-22",
+        "value": 2.68
+      },
+      {
+        "date": "09-23",
+        "value": 2.73
+      },
+      {
+        "date": "09-24",
+        "value": 2.8
+      },
+      {
+        "date": "09-25",
+        "value": 2.93
+      },
+      {
+        "date": "09-28",
+        "value": 3.02
+      },
+      {
+        "date": "09-29",
+        "value": 3.08
+      },
+      {
+        "date": "09-30",
+        "value": 3.12
+      },
+      {
+        "date": "10-01",
+        "value": 3.24
+      },
+      {
+        "date": "10-02",
+        "value": 3.1
+      },
+      {
+        "date": "10-05",
+        "value": 3.12
+      },
+      {
+        "date": "10-06",
+        "value": 3.03
+      },
+      {
+        "date": "10-07",
+        "value": 3.09
+      },
+      {
+        "date": "10-08",
+        "value": 3.15
+      },
+      {
+        "date": "10-09",
+        "value": 3.11
+      },
+      {
+        "date": "10-12",
+        "value": 3.11
+      },
+      {
+        "date": "10-13",
+        "value": 3.16
+      },
+      {
+        "date": "10-14",
+        "value": 3.25
+      },
+      {
+        "date": "10-15",
+        "value": 3.23
+      },
+      {
+        "date": "10-16",
+        "value": 3.31
+      },
+      {
+        "date": "10-19",
+        "value": 3.29
+      },
+      {
+        "date": "10-20",
+        "value": 3.33
+      },
+      {
+        "date": "10-21",
+        "value": 3.27
+      },
+      {
+        "date": "10-22",
+        "value": 3.4
+      },
+      {
+        "date": "10-23",
+        "value": 3.38
+      },
+      {
+        "date": "10-26",
+        "value": 3.3
+      },
+      {
+        "date": "10-27",
+        "value": 3.18
+      },
+      {
+        "date": "10-28",
+        "value": 3.14
+      },
+      {
+        "date": "10-29",
+        "value": 3.26
+      },
+      {
+        "date": "10-30",
+        "value": 3.44
+      },
+      {
+        "date": "11-02",
+        "value": 3.43
+      },
+      {
+        "date": "11-03",
+        "value": 3.4
+      },
+      {
+        "date": "11-04",
+        "value": 3.32
+      },
+      {
+        "date": "11-05",
+        "value": 3.48
+      },
+      {
+        "date": "11-06",
+        "value": 3.42
+      },
+      {
+        "date": "11-09",
+        "value": 3.34
+      }
+    ],
+    "latest": 3.34,
+    "prev": 3.42,
+    "change": -0.08,
+    "change_pct": -2.34
   },
   "buffett_us": {
-    "series": [],
-    "latest": null,
-    "prev": null,
-    "change": null,
-    "change_pct": null,
-    "label": null
+    "series": [
+      {
+        "date": "2011",
+        "value": 100.3
+      },
+      {
+        "date": "2012",
+        "value": 114.9
+      },
+      {
+        "date": "2013",
+        "value": 142.4
+      },
+      {
+        "date": "2014",
+        "value": 149.5
+      },
+      {
+        "date": "2015",
+        "value": 137.0
+      },
+      {
+        "date": "2016",
+        "value": 145.5
+      },
+      {
+        "date": "2017",
+        "value": 163.8
+      },
+      {
+        "date": "2018",
+        "value": 147.3
+      },
+      {
+        "date": "2019",
+        "value": 158.2
+      },
+      {
+        "date": "2020",
+        "value": 194.5
+      },
+      {
+        "date": "2021",
+        "value": 204.6
+      },
+      {
+        "date": "2022",
+        "value": 154.7
+      },
+      {
+        "date": "2023",
+        "value": 176.1
+      },
+      {
+        "date": "2024",
+        "value": 212.3
+      },
+      {
+        "date": "2025",
+        "value": 224.0
+      }
+    ],
+    "latest": 224.0,
+    "prev": 212.3,
+    "change": 11.7,
+    "change_pct": 5.51,
+    "label": "극도 과열",
+    "source": "World Bank — 시가총액/GDP (연간)",
+    "as_of": "2025"
   },
   "deposit": {
     "series": [],
     "latest": null,
     "prev": null,
     "change": null,
-    "change_pct": null
+    "change_pct": null,
+    "note": "ECOS 오류 ERROR-100"
   },
   "credit": {
     "series": [],
     "latest": null,
     "prev": null,
     "change": null,
-    "change_pct": null
+    "change_pct": null,
+    "note": "신용융자잔고 공개 소스 없음 — ECOS 미수록 / KRX 차단 / KOFIA FreeSIS 값 마스킹. data.go.kr 금융투자협회종합통계정보(15094809) 키 필요"
   }
 }
