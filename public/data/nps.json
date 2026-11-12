@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-11 08:50 KST",
+  "updated_at": "2026-11-12 10:11 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -403,20 +403,12 @@
       "rank": 50
     },
     {
-      "name": "대덕전자",
-      "value": 9.65,
-      "change": 0.0,
-      "amount": "지분율 9.65%",
-      "rcept_dt": "2026-11-04",
-      "rank": 51
-    },
-    {
       "name": "S-Oil",
       "value": 9.63,
       "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-28",
-      "rank": 52
+      "rank": 51
     },
     {
       "name": "CJ",
@@ -424,6 +416,14 @@
       "change": 0.0,
       "amount": "지분율 9.63%",
       "rcept_dt": "2026-10-06",
+      "rank": 52
+    },
+    {
+      "name": "대덕전자",
+      "value": 9.52,
+      "change": -0.13,
+      "amount": "지분율 9.52%",
+      "rcept_dt": "2026-11-12",
       "rank": 53
     },
     {
@@ -508,6 +508,14 @@
     }
   ],
   "changes": [
+    {
+      "name": "대덕전자",
+      "value": 9.52,
+      "prev": 9.65,
+      "change": -0.13,
+      "rcept_dt": "2026-11-12",
+      "is_new": false
+    },
     {
       "name": "팬오션",
       "value": 9.97,
@@ -1163,30 +1171,6 @@
       "change": null,
       "rcept_dt": "2026-08-21",
       "is_new": true
-    },
-    {
-      "name": "NHN",
-      "value": 10.12,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-13",
-      "is_new": true
-    },
-    {
-      "name": "한섬",
-      "value": 9.77,
-      "prev": 10.09,
-      "change": -0.32,
-      "rcept_dt": "2026-08-13",
-      "is_new": false
-    },
-    {
-      "name": "GS리테일",
-      "value": 10.27,
-      "prev": 9.99,
-      "change": 0.28,
-      "rcept_dt": "2026-08-13",
-      "is_new": false
     }
   ]
 }
