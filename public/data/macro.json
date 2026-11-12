@@ -1,12 +1,8 @@
 {
-  "updated_at": "2026-11-12 10:12 KST",
+  "updated_at": "2026-11-13 08:56 KST",
   "source": "FRED (St. Louis Fed) + World Bank + 한국은행 ECOS",
   "hy_spread": {
     "series": [
-      {
-        "date": "07-07",
-        "value": 2.67
-      },
       {
         "date": "07-08",
         "value": 2.7
@@ -362,12 +358,16 @@
       {
         "date": "11-09",
         "value": 3.34
+      },
+      {
+        "date": "11-11",
+        "value": 3.3
       }
     ],
-    "latest": 3.34,
-    "prev": 3.42,
-    "change": -0.08,
-    "change_pct": -2.34
+    "latest": 3.3,
+    "prev": 3.34,
+    "change": -0.04,
+    "change_pct": -1.2
   },
   "buffett_us": {
     "series": [

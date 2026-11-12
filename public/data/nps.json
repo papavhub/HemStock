@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-12 10:11 KST",
+  "updated_at": "2026-11-13 08:55 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -421,7 +421,7 @@
     {
       "name": "대덕전자",
       "value": 9.52,
-      "change": -0.13,
+      "change": 0.0,
       "amount": "지분율 9.52%",
       "rcept_dt": "2026-11-12",
       "rank": 53
