@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24 13:08 KST",
+  "updated_at": "2026-11-25 11:51 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -1203,22 +1203,6 @@
       "change": 0.19,
       "rcept_dt": "2026-09-01",
       "is_new": false
-    },
-    {
-      "name": "진성티이씨",
-      "value": 9.99,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-26",
-      "is_new": true
-    },
-    {
-      "name": "S-Oil",
-      "value": 9.66,
-      "prev": null,
-      "change": null,
-      "rcept_dt": "2026-08-26",
-      "is_new": true
     }
   ]
 }
