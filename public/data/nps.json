@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-25 11:51 KST",
+  "updated_at": "2026-11-26 10:59 KST",
   "source": "금감원 DART — 임원ㆍ주요주주특정증권등소유상황보고서(D002) + dart.fss.or.kr 뷰어 파싱",
   "stocks": [
     {
@@ -275,20 +275,12 @@
       "rank": 34
     },
     {
-      "name": "SNT모티브",
-      "value": 10.0,
-      "change": 0.0,
-      "amount": "지분율 10.00%",
-      "rcept_dt": "2026-11-19",
-      "rank": 35
-    },
-    {
       "name": "효성중공업",
       "value": 10.0,
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-08-03",
-      "rank": 36
+      "rank": 35
     },
     {
       "name": "이수페타시스",
@@ -296,7 +288,7 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-10-12",
-      "rank": 37
+      "rank": 36
     },
     {
       "name": "삼성E&A",
@@ -304,7 +296,7 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-10-28",
-      "rank": 38
+      "rank": 37
     },
     {
       "name": "현대제철",
@@ -312,6 +304,14 @@
       "change": 0.0,
       "amount": "지분율 10.00%",
       "rcept_dt": "2026-11-19",
+      "rank": 38
+    },
+    {
+      "name": "SNT모티브",
+      "value": 9.99,
+      "change": -0.01,
+      "amount": "지분율 9.99%",
+      "rcept_dt": "2026-11-25",
       "rank": 39
     },
     {
@@ -516,6 +516,14 @@
     }
   ],
   "changes": [
+    {
+      "name": "SNT모티브",
+      "value": 9.99,
+      "prev": 10.0,
+      "change": -0.01,
+      "rcept_dt": "2026-11-25",
+      "is_new": false
+    },
     {
       "name": "SNT모티브",
       "value": 10.0,
