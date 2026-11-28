@@ -1,16 +1,8 @@
 {
-  "updated_at": "2026-11-27 11:00 KST",
+  "updated_at": "2026-11-28 10:43 KST",
   "source": "FRED (St. Louis Fed) + World Bank + 한국은행 ECOS",
   "hy_spread": {
     "series": [
-      {
-        "date": "07-22",
-        "value": 2.68
-      },
-      {
-        "date": "07-23",
-        "value": 2.77
-      },
       {
         "date": "07-24",
         "value": 2.79
@@ -362,22 +354,91 @@
       {
         "date": "11-24",
         "value": 3.72
+      },
+      {
+        "date": "11-25",
+        "value": 3.77
+      },
+      {
+        "date": "11-26",
+        "value": 3.77
       }
     ],
-    "latest": 3.72,
-    "prev": 3.63,
-    "change": 0.09,
-    "change_pct": 2.48
+    "latest": 3.77,
+    "prev": 3.77,
+    "change": 0.0,
+    "change_pct": 0.0
   },
   "buffett_us": {
-    "series": [],
-    "latest": null,
-    "prev": null,
-    "change": null,
-    "change_pct": null,
-    "label": null,
-    "source": null,
-    "as_of": null
+    "series": [
+      {
+        "date": "2011",
+        "value": 100.3
+      },
+      {
+        "date": "2012",
+        "value": 114.9
+      },
+      {
+        "date": "2013",
+        "value": 142.4
+      },
+      {
+        "date": "2014",
+        "value": 149.5
+      },
+      {
+        "date": "2015",
+        "value": 137.0
+      },
+      {
+        "date": "2016",
+        "value": 145.5
+      },
+      {
+        "date": "2017",
+        "value": 163.8
+      },
+      {
+        "date": "2018",
+        "value": 147.3
+      },
+      {
+        "date": "2019",
+        "value": 158.2
+      },
+      {
+        "date": "2020",
+        "value": 194.5
+      },
+      {
+        "date": "2021",
+        "value": 204.6
+      },
+      {
+        "date": "2022",
+        "value": 154.7
+      },
+      {
+        "date": "2023",
+        "value": 176.1
+      },
+      {
+        "date": "2024",
+        "value": 212.3
+      },
+      {
+        "date": "2025",
+        "value": 224.0
+      }
+    ],
+    "latest": 224.0,
+    "prev": 212.3,
+    "change": 11.7,
+    "change_pct": 5.51,
+    "label": "극도 과열",
+    "source": "World Bank — 시가총액/GDP (연간)",
+    "as_of": "2025"
   },
   "deposit": {
     "series": [],
